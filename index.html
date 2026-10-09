@@ -1,0 +1,2874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AeroAnalytics — Airline Flight Dashboard</title>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 240px;
+      --topbar-h: 56px;
+      --filterbar-h: 52px;
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --border: #e2e8f0;
+      --border-2: #f1f5f9;
+      --text: #0f172a;
+      --text-2: #334155;
+      --muted: #64748b;
+      --muted-2: #94a3b8;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-light: #eff6ff;
+      --accent-border: #bfdbfe;
+      --green: #059669;
+      --green-light: #ecfdf5;
+      --green-border: #a7f3d0;
+      --red: #dc2626;
+      --red-light: #fef2f2;
+      --red-border: #fecaca;
+      --yellow: #d97706;
+      --yellow-light: #fffbeb;
+      --yellow-border: #fde68a;
+      --purple: #7c3aed;
+      --purple-light: #f5f3ff;
+      --purple-border: #ddd6fe;
+      --teal: #0891b2;
+      --teal-light: #ecfeff;
+      --indigo: #4f46e5;
+      --indigo-light: #eef2ff;
+      --sidebar-bg: #0f172a;
+      --sidebar-bg-2: #1e293b;
+      --sidebar-text: #94a3b8;
+      --sidebar-text-hover: #e2e8f0;
+      --sidebar-active: #2563eb;
+      --sidebar-active-text: #ffffff;
+      --sidebar-hover: #1e293b;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -2px rgba(0,0,0,.04);
+      --transition: .15s ease;
+    }
+
+    html, body, #root { height: 100%; }
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, "Inter", sans-serif;
+      font-size: 13.5px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* ── Layout ── */
+    .layout { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      transition: width var(--transition);
+      position: relative;
+      z-index: 100;
+    }
+    .sidebar-brand {
+      padding: 20px 18px 16px;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .sidebar-brand .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-brand .brand-icon-wrap {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .sidebar-brand h1 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #f8fafc;
+      letter-spacing: -.2px;
+    }
+    .sidebar-brand .brand-tagline {
+      font-size: 10.5px;
+      color: #475569;
+      padding-left: 42px;
+      margin-top: 1px;
+    }
+    .sidebar-nav { flex: 1; padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
+    .nav-section-label {
+      padding: 12px 10px 4px;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #334155;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      color: var(--sidebar-text);
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background var(--transition), color var(--transition);
+      border-radius: 8px;
+    }
+    .nav-item:hover { background: var(--sidebar-hover); color: var(--sidebar-text-hover); }
+    .nav-item.active {
+      background: var(--accent);
+      color: var(--sidebar-active-text);
+      font-weight: 600;
+    }
+    .nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; opacity: .85; }
+    .nav-item .nav-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.7);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+      min-width: 20px;
+      text-align: center;
+    }
+    .nav-item.active .nav-badge { background: rgba(255,255,255,.2); color: #fff; }
+    .sidebar-footer {
+      padding: 14px 18px;
+      border-top: 1px solid #1e293b;
+      font-size: 10.5px;
+      color: #334155;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .sidebar-footer .footer-updated { color: #3b82f6; font-weight: 600; }
+
+    /* ── Main ── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: var(--topbar-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+      gap: 16px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-breadcrumb { font-size: 11px; color: var(--muted); }
+    .topbar-breadcrumb span { color: var(--accent); font-weight: 600; }
+    .topbar h2 { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: -.3px; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-meta { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+    .topbar-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text-2);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .topbar-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .topbar-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ── Page content ── */
+    .page-content { flex: 1; overflow-y: auto; padding: 20px 24px 32px; }
+
+    /* ── Section divider ── */
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin: 24px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Stat Cards ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: box-shadow var(--transition), transform var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .stat-card.green::after  { background: var(--green); }
+    .stat-card.red::after    { background: var(--red); }
+    .stat-card.yellow::after { background: var(--yellow); }
+    .stat-card.blue::after   { background: var(--accent); }
+    .stat-card.purple::after { background: var(--purple); }
+    .stat-card .label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin-bottom: 6px;
+    }
+    .stat-card .value { font-size: 24px; font-weight: 900; color: var(--text); line-height: 1.1; }
+    .stat-card .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .stat-card.green .value { color: var(--green); }
+    .stat-card.red .value { color: var(--red); }
+    .stat-card.yellow .value { color: var(--yellow); }
+    .stat-card.blue .value { color: var(--accent); }
+    .stat-card.purple .value { color: var(--purple); }
+    .stat-card .icon-wrap { float: right; font-size: 26px; opacity: .1; margin-top: -2px; }
+
+    /* ── KPI cards ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 20px; }
+    @media (max-width: 1400px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 900px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px 12px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      transition: box-shadow var(--transition), transform var(--transition);
+    }
+    .kpi-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .kpi-card.kpi-blue::before   { background: var(--accent); }
+    .kpi-card.kpi-green::before  { background: var(--green); }
+    .kpi-card.kpi-yellow::before { background: var(--yellow); }
+    .kpi-card.kpi-red::before    { background: var(--red); }
+    .kpi-card.kpi-purple::before { background: var(--purple); }
+    .kpi-card.kpi-teal::before   { background: var(--teal); }
+    .kpi-card.kpi-indigo::before { background: var(--indigo); }
+    .kpi-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 5px; }
+    .kpi-value { font-size: 20px; font-weight: 900; color: var(--text); line-height: 1.1; }
+    .kpi-value.kpi-blue   { color: var(--accent); }
+    .kpi-value.kpi-green  { color: var(--green); }
+    .kpi-value.kpi-yellow { color: var(--yellow); }
+    .kpi-value.kpi-red    { color: var(--red); }
+    .kpi-value.kpi-purple { color: var(--purple); }
+    .kpi-value.kpi-teal   { color: var(--teal); }
+    .kpi-value.kpi-indigo { color: var(--indigo); }
+    .kpi-sub { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+    .kpi-icon { position: absolute; right: 12px; top: 12px; font-size: 20px; opacity: .1; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 18px 20px;
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin-bottom: 14px;
+    }
+
+    /* ── Grid layouts ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 14px; }
+    @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+    /* ── Chart cards ── */
+    .chart-grid-top  { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .chart-grid-mid  { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .chart-grid-bot  { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
+    @media (max-width: 1100px) { .chart-grid-top, .chart-grid-mid { grid-template-columns: 1fr; } }
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+    }
+    .chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+    .chart-title { font-size: 13px; font-weight: 700; color: var(--text-2); }
+    .chart-subtitle { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .chart-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; margin-bottom: 10px; }
+    .cl-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+    .cl-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      background: var(--surface-2);
+      padding: 9px 12px;
+      text-align: left;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tbody tr { border-bottom: 1px solid var(--border-2); transition: background var(--transition); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-2); }
+    tbody td { padding: 9px 12px; color: var(--text); vertical-align: middle; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      white-space: nowrap;
+    }
+    .badge-green  { background: var(--green-light);  color: var(--green);  border: 1px solid var(--green-border); }
+    .badge-red    { background: var(--red-light);    color: var(--red);    border: 1px solid var(--red-border); }
+    .badge-yellow { background: var(--yellow-light); color: var(--yellow); border: 1px solid var(--yellow-border); }
+    .badge-blue   { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent-border); }
+    .badge-purple { background: var(--purple-light); color: var(--purple); border: 1px solid var(--purple-border); }
+    .badge-gray   { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── Filters bar ── */
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+    .filter-input {
+      padding: 6px 11px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      font-family: inherit;
+    }
+    .filter-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.08); }
+    select.filter-input { cursor: pointer; padding-right: 28px; }
+    .filter-label { font-size: 11.5px; color: var(--muted); white-space: nowrap; font-weight: 600; }
+
+    /* ── Global filter bar ── */
+    .global-filters {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+    }
+    .gf-group { display: flex; align-items: center; gap: 5px; }
+    .gf-label { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+    .gf-select {
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      background: var(--surface-2);
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+      transition: border-color var(--transition);
+      min-width: 120px;
+      font-family: inherit;
+    }
+    .gf-select:focus { border-color: var(--accent); }
+    .gf-reset {
+      margin-left: auto;
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 11.5px;
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+    }
+    .gf-reset:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .gf-reset:disabled { opacity: .35; cursor: not-allowed; }
+    .gf-count {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface-2);
+      padding: 3px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+      border: 1px solid var(--border);
+    }
+    .gf-active-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: inline-block;
+      margin-right: 2px;
+    }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 12px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .page-btn {
+      padding: 5px 9px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-2);
+      transition: all var(--transition);
+      line-height: 1.4;
+      font-family: inherit;
+    }
+    .page-btn:hover:not(:disabled) { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+    .page-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .page-info { font-size: 11.5px; color: var(--muted); margin-right: 4px; }
+
+    /* ── SVG Tooltip ── */
+    .svg-tooltip {
+      position: fixed;
+      background: var(--sidebar-bg);
+      color: #e2e8f0;
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 9999;
+      white-space: nowrap;
+      box-shadow: var(--shadow-lg);
+      line-height: 1.5;
+      border: 1px solid #1e293b;
+    }
+    .svg-tooltip strong { color: #f8fafc; display: block; font-size: 11px; margin-bottom: 2px; opacity: .7; }
+    .svg-tooltip .tip-val { font-size: 14px; font-weight: 800; color: #fff; }
+
+    /* ── Line chart ── */
+    .lc-point { cursor: pointer; }
+
+    /* ── HBar chart ── */
+    .hbar-chart { display: flex; flex-direction: column; gap: 7px; }
+    .hbar-row { display: flex; align-items: center; gap: 8px; }
+    .hbar-label {
+      font-size: 11.5px;
+      color: var(--text-2);
+      width: 115px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: default;
+    }
+    .hbar-track {
+      flex: 1;
+      height: 16px;
+      background: var(--surface-2);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      border: 1px solid var(--border-2);
+    }
+    .hbar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+    }
+    .hbar-val { font-size: 11.5px; font-weight: 700; color: var(--text); width: 48px; text-align: right; flex-shrink: 0; }
+
+    /* ── Big Donut ── */
+    .donut-big-wrap { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; padding: 6px 0; }
+    .donut-big-legend { display: flex; flex-direction: column; gap: 10px; }
+    .dbl-item { display: flex; align-items: center; gap: 10px; }
+    .dbl-dot  { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+    .dbl-info .dbl-label { font-size: 12.5px; font-weight: 600; color: var(--text); }
+    .dbl-info .dbl-val   { font-size: 11px; color: var(--muted); }
+
+    /* ── VBar chart ── */
+    .adb-bar { cursor: pointer; transition: opacity .15s; }
+    .adb-bar:hover { opacity: .78; }
+
+    /* ── Old BarChart (kept for compat) ── */
+    .bar-chart { display: flex; flex-direction: column; gap: 9px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; }
+    .bar-label { font-size: 12px; color: var(--muted); width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { flex: 1; height: 9px; background: var(--surface-2); border-radius: 5px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 5px; transition: width .4s ease; }
+    .bar-val { font-size: 12px; font-weight: 600; color: var(--text); width: 50px; text-align: right; flex-shrink: 0; }
+
+    /* ── Donut (small, compat) ── */
+    .donut-wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Progress bar ── */
+    .progress-bar { height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; margin-top: 5px; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+
+    /* ── Route card ── */
+    .route-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: box-shadow var(--transition);
+    }
+    .route-card:hover { box-shadow: var(--shadow-md); }
+    .route-path { font-weight: 700; font-size: 14px; color: var(--text); }
+    .route-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .route-stats { display: flex; gap: 16px; text-align: right; flex-shrink: 0; }
+    .route-stat-item .rs-val { font-size: 14px; font-weight: 700; color: var(--text); }
+    .route-stat-item .rs-label { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+
+    /* ── Airport card ── */
+    .airport-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .airport-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      transition: box-shadow var(--transition), transform var(--transition);
+    }
+    .airport-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .airport-code { font-size: 22px; font-weight: 900; color: var(--accent); letter-spacing: 1px; }
+    .airport-name { font-size: 12.5px; font-weight: 600; color: var(--text); margin-top: 2px; line-height: 1.3; }
+    .airport-city { font-size: 11.5px; color: var(--muted); }
+    .airport-stats { display: flex; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .ap-stat .val { font-size: 15px; font-weight: 700; color: var(--text); }
+    .ap-stat .lab { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+
+    /* ── Empty / Loading states ── */
+    .empty-state { text-align: center; padding: 44px 16px; color: var(--muted); font-size: 13.5px; }
+    .empty-state .es-icon { font-size: 36px; margin-bottom: 10px; opacity: .5; }
+    .empty-state .es-title { font-weight: 700; color: var(--text-2); margin-bottom: 4px; font-size: 14px; }
+    .empty-state .es-sub { font-size: 12px; }
+    .loading { display: flex; align-items: center; justify-content: center; height: 180px; color: var(--muted); font-size: 13px; gap: 8px; }
+
+    /* ── Modal overlay ── */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,.5);
+      backdrop-filter: blur(2px);
+      z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      width: 500px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+    }
+    .modal-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      z-index: 1;
+    }
+    .modal-title { font-size: 17px; font-weight: 800; color: var(--text); }
+    .modal-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .modal-close {
+      border: none;
+      background: var(--surface-2);
+      border-radius: var(--radius-sm);
+      width: 28px; height: 28px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+    .modal-close:hover { background: var(--red-light); color: var(--red); }
+    .modal-body { padding: 16px 24px 24px; }
+    .detail-row {
+      display: flex;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border-2);
+      align-items: baseline;
+      gap: 12px;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-key { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; width: 44%; flex-shrink: 0; }
+    .detail-val { font-size: 13px; font-weight: 500; color: var(--text); }
+
+    /* ── Export button ── */
+    .export-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text-2);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .export-btn:hover { border-color: var(--green); color: var(--green); background: var(--green-light); }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 0px; }
+      .sidebar { display: none; }
+      .page-content { padding: 12px 16px 24px; }
+      .topbar { padding: 0 16px; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<!-- Dataset — inlined to work under file:// without a server -->
+<script>
+// ============================================================
+//  AIRLINE FLIGHT ANALYTICS — Mock Dataset (inlined)
+//  Exposes: window.FLIGHTS_DATA, window.AIRPORTS_META, window.AIRLINES_META
+// ============================================================
+(function () {
+  var AIRLINES = [
+    { code: "AA", name: "American Airlines" },
+    { code: "DL", name: "Delta Air Lines" },
+    { code: "UA", name: "United Airlines" },
+    { code: "WN", name: "Southwest Airlines" },
+    { code: "BA", name: "British Airways" },
+    { code: "LH", name: "Lufthansa" },
+    { code: "EK", name: "Emirates" },
+    { code: "QR", name: "Qatar Airways" },
+  ];
+  var AIRPORTS = [
+    { code: "JFK", name: "John F. Kennedy Intl",        city: "New York",      country: "USA" },
+    { code: "LAX", name: "Los Angeles Intl",             city: "Los Angeles",   country: "USA" },
+    { code: "ORD", name: "O'Hare Intl",                  city: "Chicago",       country: "USA" },
+    { code: "DFW", name: "Dallas/Fort Worth Intl",       city: "Dallas",        country: "USA" },
+    { code: "ATL", name: "Hartsfield-Jackson Atlanta",   city: "Atlanta",       country: "USA" },
+    { code: "MIA", name: "Miami Intl",                   city: "Miami",         country: "USA" },
+    { code: "SFO", name: "San Francisco Intl",           city: "San Francisco", country: "USA" },
+    { code: "SEA", name: "Seattle-Tacoma Intl",          city: "Seattle",       country: "USA" },
+    { code: "BOS", name: "Logan Intl",                   city: "Boston",        country: "USA" },
+    { code: "LHR", name: "Heathrow",                     city: "London",        country: "UK" },
+    { code: "CDG", name: "Charles de Gaulle",            city: "Paris",         country: "France" },
+    { code: "FRA", name: "Frankfurt Airport",            city: "Frankfurt",     country: "Germany" },
+    { code: "DXB", name: "Dubai Intl",                   city: "Dubai",         country: "UAE" },
+    { code: "DOH", name: "Hamad Intl",                   city: "Doha",          country: "Qatar" },
+    { code: "SIN", name: "Changi Airport",               city: "Singapore",     country: "Singapore" },
+    { code: "NRT", name: "Narita Intl",                  city: "Tokyo",         country: "Japan" },
+    { code: "SYD", name: "Kingsford Smith",              city: "Sydney",        country: "Australia" },
+    { code: "YYZ", name: "Toronto Pearson Intl",         city: "Toronto",       country: "Canada" },
+    { code: "GRU", name: "Guarulhos Intl",               city: "São Paulo",     country: "Brazil" },
+    { code: "MEX", name: "Benito Juárez Intl",           city: "Mexico City",   country: "Mexico" },
+  ];
+  var DISTANCES = {
+    "JFK-LAX":3983,"JFK-ORD":1190,"JFK-DFW":2212,"JFK-ATL":1236,"JFK-MIA":1757,
+    "JFK-SFO":4151,"JFK-SEA":3866,"JFK-BOS":298,"JFK-LHR":5570,"JFK-CDG":5837,
+    "JFK-FRA":6212,"JFK-DXB":11005,"JFK-DOH":11388,"JFK-NRT":10844,"JFK-YYZ":551,"JFK-GRU":7678,
+    "LAX-ORD":2801,"LAX-DFW":1996,"LAX-ATL":3105,"LAX-SFO":559,"LAX-SEA":1535,
+    "LAX-LHR":8757,"LAX-DXB":13420,"LAX-NRT":8784,"LAX-SYD":12077,"LAX-MEX":2551,
+    "ORD-DFW":1292,"ORD-ATL":1153,"ORD-MIA":2198,"ORD-LHR":6370,"ORD-FRA":7469,"ORD-YYZ":703,
+    "DFW-ATL":1158,"DFW-MIA":1776,"DFW-SFO":2858,"DFW-MEX":1558,
+    "ATL-MIA":1062,"ATL-LHR":7142,"ATL-CDG":7754,
+    "MIA-GRU":6878,"MIA-MEX":2091,
+    "SFO-SEA":1095,"SFO-NRT":8280,"SFO-SYD":11930,
+    "LHR-CDG":341,"LHR-FRA":634,"LHR-DXB":5482,"LHR-DOH":5222,
+    "LHR-SIN":10840,"LHR-NRT":9538,"LHR-SYD":16993,"LHR-YYZ":5715,
+    "CDG-FRA":479,"CDG-DXB":5248,"CDG-SIN":10730,
+    "FRA-DXB":4879,"FRA-NRT":9360,"FRA-SIN":10206,
+    "DXB-DOH":361,"DXB-SIN":5844,"DXB-NRT":7963,"DXB-SYD":11788,
+    "DOH-SIN":5740,"DOH-NRT":8028,
+    "SIN-NRT":5341,"SIN-SYD":6309,
+    "NRT-SYD":7823,"YYZ-LHR":5715,"GRU-LHR":9459,
+  };
+  var DELAY_REASONS = ["Late aircraft","Weather","Air traffic control","Mechanical issue","Crew availability","Fueling delay","Security screening","Boarding delay","Connecting flight","Catering delay"];
+  function getDist(o,d){return DISTANCES[o+"-"+d]||DISTANCES[d+"-"+o]||3500;}
+  function Rng(s){this.s=s>>>0;}
+  Rng.prototype.next=function(){this.s=(Math.imul(1664525,this.s)+1013904223)>>>0;return this.s/4294967295;};
+  Rng.prototype.int=function(a,b){return Math.floor(this.next()*(b-a+1))+a;};
+  Rng.prototype.pick=function(a){return a[this.int(0,a.length-1)];};
+  function pad2(n){return String(n).padStart(2,"0");}
+  function addMins(t,m){var p=t.split(":").map(Number),tot=((p[0]*60+p[1]+m)%1440+1440)%1440;return pad2(Math.floor(tot/60))+":"+pad2(tot%60);}
+  function dateOff(base,days){var d=new Date(base);d.setDate(d.getDate()+days);return d.toISOString().slice(0,10);}
+  var ROUTES=[["JFK","LAX"],["JFK","ORD"],["JFK","LHR"],["JFK","CDG"],["JFK","MIA"],["JFK","BOS"],["JFK","ATL"],["JFK","DXB"],["JFK","NRT"],["JFK","YYZ"],["JFK","GRU"],["JFK","SFO"],["LAX","ORD"],["LAX","DFW"],["LAX","SFO"],["LAX","NRT"],["LAX","SYD"],["LAX","LHR"],["LAX","SEA"],["LAX","MEX"],["LAX","ATL"],["ORD","DFW"],["ORD","ATL"],["ORD","LHR"],["ORD","FRA"],["ORD","YYZ"],["ORD","MIA"],["DFW","ATL"],["DFW","MIA"],["DFW","SFO"],["DFW","MEX"],["DFW","LHR"],["ATL","MIA"],["ATL","LHR"],["ATL","CDG"],["ATL","SFO"],["MIA","GRU"],["MIA","MEX"],["MIA","LHR"],["SFO","SEA"],["SFO","NRT"],["SFO","SYD"],["SFO","LHR"],["LHR","CDG"],["LHR","FRA"],["LHR","DXB"],["LHR","SIN"],["LHR","NRT"],["LHR","SYD"],["CDG","FRA"],["CDG","DXB"],["CDG","SIN"],["FRA","DXB"],["FRA","NRT"],["FRA","SIN"],["DXB","DOH"],["DXB","SIN"],["DXB","NRT"],["DXB","SYD"],["DOH","SIN"],["SIN","NRT"],["SIN","SYD"],["NRT","SYD"],["YYZ","LHR"],["GRU","LHR"],["BOS","LHR"],["SEA","NRT"]];
+  var rng=new Rng(12345),flights=[],id=1;
+  var wideBody=["Boeing 777-300ER","Boeing 787-9 Dreamliner","Airbus A330-300","Airbus A350-900","Airbus A380-800"];
+  var narrowBody=["Boeing 737-800","Boeing 737 MAX 9","Boeing 757-200","Airbus A319","Airbus A320neo","Airbus A321XLR"];
+  while(flights.length<520){
+    for(var pi=0;pi<ROUTES.length&&flights.length<520;pi++){
+      var orig=ROUTES[pi][0],dest=ROUTES[pi][1],dist=getDist(orig,dest),isIntl=dist>4000;
+      var pool=isIntl?[AIRLINES[4],AIRLINES[5],AIRLINES[6],AIRLINES[7],AIRLINES[0],AIRLINES[2]]:[AIRLINES[0],AIRLINES[1],AIRLINES[2],AIRLINES[3]];
+      var al=rng.pick(pool),fnum=al.code+rng.int(100,9999),depDate=dateOff("2024-01-01",rng.int(0,89));
+      var sdH=rng.int(5,22),sdM=rng.pick([0,5,10,15,20,25,30,35,40,45,50,55]);
+      var sd=pad2(sdH)+":"+pad2(sdM),dur=Math.floor(dist/10+30),sa=addMins(sd,dur);
+      var roll=rng.next(),status,dlm,dlr,ad,aa;
+      if(roll<0.70){status="On Time";dlm=0;dlr="";ad=addMins(sd,rng.int(0,4));aa=addMins(sa,rng.int(-3,7));}
+      else if(roll<0.92){status="Delayed";dlm=rng.int(15,240);dlr=rng.pick(DELAY_REASONS);ad=addMins(sd,dlm);aa=addMins(sa,dlm+rng.int(0,15));}
+      else{status="Cancelled";dlm=0;dlr=rng.pick(["Weather","Mechanical issue","Air traffic control","Crew availability"]);ad=null;aa=null;}
+      var seats=rng.pick([120,150,180,200,240,280,320,350,400,450,500,555]);
+      var pax=status==="Cancelled"?0:Math.floor(seats*(0.72+rng.next()*0.25));
+      flights.push({flight_id:"FL"+String(id).padStart(5,"0"),airline:al.name,airline_code:al.code,flight_number:fnum,origin_airport:orig,destination_airport:dest,route:orig+" \u2192 "+dest,departure_date:depDate,scheduled_departure:sd,actual_departure:ad,scheduled_arrival:sa,actual_arrival:aa,flight_status:status,aircraft:rng.pick(isIntl?wideBody:narrowBody),passengers:pax,seats:seats,delay_minutes:dlm,delay_reason:dlr,distance_km:dist});
+      id++;
+    }
+  }
+  window.FLIGHTS_DATA=flights.slice(0,520);
+  window.AIRPORTS_META=AIRPORTS;
+  window.AIRLINES_META=AIRLINES;
+})();
+</script>
+<!-- App -->
+<script type="text/babel">
+const { useState, useMemo, useCallback } = React;
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+const fmt = (n) => n == null ? "—" : n.toLocaleString();
+const pct = (a, b) => b === 0 ? "0.0" : ((a / b) * 100).toFixed(1);
+
+function statusBadge(s) {
+  if (s === "On Time")  return <span className="badge badge-green">On Time</span>;
+  if (s === "Delayed")  return <span className="badge badge-yellow">Delayed</span>;
+  if (s === "Cancelled") return <span className="badge badge-red">Cancelled</span>;
+  return <span className="badge badge-gray">{s}</span>;
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { id: "overview",   label: "Overview",    icon: "📊" },
+  { id: "flights",    label: "Flights",     icon: "✈️" },
+  { id: "routes",     label: "Routes",      icon: "🗺️" },
+  { id: "airports",   label: "Airports",    icon: "🏢" },
+  { id: "passengers", label: "Passengers",  icon: "👥" },
+  { id: "delays",     label: "Delays",      icon: "⏱️" },
+];
+
+const NAV_BADGES = {
+  flights:    520,
+  routes:     67,
+  airports:   20,
+  passengers: null,
+  delays:     null,
+};
+
+function Sidebar({ active, onNav }) {
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-brand">
+        <div className="brand-row">
+          <div className="brand-icon-wrap">✈️</div>
+          <h1>AeroAnalytics</h1>
+        </div>
+        <div className="brand-tagline">Flight Intelligence Dashboard</div>
+      </div>
+      <nav className="sidebar-nav">
+        <div className="nav-section-label">Analytics</div>
+        {NAV_ITEMS.map(item => (
+          <button
+            key={item.id}
+            className={"nav-item" + (active === item.id ? " active" : "")}
+            onClick={() => onNav(item.id)}
+          >
+            <span className="nav-icon">{item.icon}</span>
+            {item.label}
+            {NAV_BADGES[item.id] != null && (
+              <span className="nav-badge">{NAV_BADGES[item.id]}</span>
+            )}
+          </button>
+        ))}
+      </nav>
+      <div className="sidebar-footer">
+        <div>© 2025 AeroAnalytics</div>
+        <div className="footer-updated">Jan – Mar 2024 · 520 flights</div>
+      </div>
+    </aside>
+  );
+}
+
+// ─── Top Bar ─────────────────────────────────────────────────────────────────
+const PAGE_TITLES = {
+  overview:   "Overview",
+  flights:    "Flights",
+  routes:     "Routes",
+  airports:   "Airports",
+  passengers: "Passengers",
+  delays:     "Delays",
+};
+
+const PAGE_SUBTITLES = {
+  overview:   "Key performance indicators across all operations",
+  flights:    "Browse, filter and inspect every flight record",
+  routes:     "Origin–destination pair analysis",
+  airports:   "Hub traffic and performance metrics",
+  passengers: "Load factors and passenger volume analytics",
+  delays:     "Delay root-cause and duration breakdown",
+};
+
+function TopBar({ page, total }) {
+  return (
+    <div className="topbar">
+      <div className="topbar-left">
+        <div>
+          <div className="topbar-breadcrumb">Dashboard <span>/ {PAGE_TITLES[page]}</span></div>
+          <h2>{PAGE_TITLES[page]}</h2>
+        </div>
+      </div>
+      <div className="topbar-right">
+        <span className="topbar-meta">{fmt(total)} records · Jan–Mar 2024</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── SVG Donut ────────────────────────────────────────────────────────────────
+function Donut({ data }) {
+  const size = 100, r = 38, cx = 50, cy = 50;
+  const circumference = 2 * Math.PI * r;
+  const total = data.reduce((s, d) => s + d.value, 0);
+  let offset = 0;
+  const segments = data.map(d => {
+    const len = total === 0 ? 0 : (d.value / total) * circumference;
+    const seg = { ...d, offset, len };
+    offset += len;
+    return seg;
+  });
+  return (
+    <div className="donut-wrap">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth="14" />
+        {segments.map((s, i) => (
+          <circle key={i} cx={cx} cy={cy} r={r} fill="none"
+            stroke={s.color} strokeWidth="14"
+            strokeDasharray={`${s.len} ${circumference - s.len}`}
+            strokeDashoffset={-s.offset}
+            transform={`rotate(-90 ${cx} ${cy})`}
+          />
+        ))}
+        <text x={cx} y={cy+1} textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="800" fill="#1a202c">{total}</text>
+      </svg>
+      <div className="donut-legend">
+        {data.map((d, i) => (
+          <div className="legend-item" key={i}>
+            <span className="legend-dot" style={{ background: d.color }} />
+            <span style={{ color: "#1a202c", fontWeight: 600 }}>{d.label}</span>
+            <span style={{ color: "#718096" }}>· {d.value} ({pct(d.value, total)}%)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Bar Chart ────────────────────────────────────────────────────────────────
+function BarChart({ rows, color = "#3b82f6", maxVal }) {
+  const max = maxVal || Math.max(...rows.map(r => r.value), 1);
+  return (
+    <div className="bar-chart">
+      {rows.map((r, i) => (
+        <div className="bar-row" key={i}>
+          <div className="bar-label" title={r.label}>{r.label}</div>
+          <div className="bar-track">
+            <div className="bar-fill" style={{ width: `${(r.value / max) * 100}%`, background: r.color || color }} />
+          </div>
+          <div className="bar-val">{fmt(r.value)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── OVERVIEW PAGE ────────────────────────────────────────────────────────────
+
+// Tooltip state hook
+function useTooltip() {
+  const [tip, setTip] = React.useState(null);
+  const show = (e, html) => setTip({ x: e.clientX + 14, y: e.clientY - 10, html });
+  const hide = () => setTip(null);
+  const move = (e) => setTip(t => t ? { ...t, x: e.clientX + 14, y: e.clientY - 10 } : null);
+  const el = tip ? (
+    <div className="svg-tooltip" style={{ left: tip.x, top: tip.y }}
+      dangerouslySetInnerHTML={{ __html: tip.html }} />
+  ) : null;
+  return { show, hide, move, el };
+}
+
+// Line Chart — Flights by Date
+function LineChart({ points, color }) {
+  const tip = useTooltip();
+  if (!points.length) return <div className="empty-state" style={{padding:'30px 0'}}>No data</div>;
+  const W = 520, H = 160, padL = 36, padR = 12, padT = 12, padB = 28;
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const minX = 0, maxX = xs.length - 1;
+  const minY = 0, maxY = Math.max(...ys, 1);
+  const sx = (i) => padL + (i / Math.max(maxX, 1)) * (W - padL - padR);
+  const sy = (v) => padT + (1 - v / maxY) * (H - padT - padB);
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(i).toFixed(1)},${sy(p.y).toFixed(1)}`).join(' ');
+  const areaD = `${pathD} L${sx(maxX).toFixed(1)},${(H - padB).toFixed(1)} L${sx(0).toFixed(1)},${(H - padB).toFixed(1)} Z`;
+  // Y axis ticks
+  const yTicks = [0, Math.round(maxY / 2), maxY];
+  // X axis: show ~6 evenly spaced labels
+  const step = Math.max(1, Math.floor(points.length / 6));
+  const xLabels = points.filter((_, i) => i % step === 0 || i === points.length - 1);
+  return (
+    <div style={{ position: 'relative' }}>
+      {tip.el}
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: H, display: 'block' }}>
+        <defs>
+          <linearGradient id="lcGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.18" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
+        {/* Grid lines */}
+        {yTicks.map((v, i) => (
+          <g key={i}>
+            <line x1={padL} x2={W - padR} y1={sy(v)} y2={sy(v)} stroke="#e2e8f0" strokeWidth="1" />
+            <text x={padL - 4} y={sy(v) + 4} textAnchor="end" fontSize="9" fill="#94a3b8">{v}</text>
+          </g>
+        ))}
+        {/* Area fill */}
+        <path d={areaD} fill="url(#lcGrad)" />
+        {/* Line */}
+        <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        {/* Points */}
+        {points.map((p, i) => (
+          <circle key={i} className="lc-point" cx={sx(i)} cy={sy(p.y)} r="3" fill={color} stroke="#fff" strokeWidth="1.5"
+            onMouseEnter={e => tip.show(e, `<strong>${p.x}</strong>${p.y} flights`)}
+            onMouseLeave={tip.hide}
+            onMouseMove={tip.move}
+          />
+        ))}
+        {/* X axis labels */}
+        {xLabels.map((p, i) => {
+          const idx = points.indexOf(p);
+          return <text key={i} x={sx(idx)} y={H - 6} textAnchor="middle" fontSize="9" fill="#94a3b8">{p.x.slice(5)}</text>;
+        })}
+        {/* X axis line */}
+        <line x1={padL} x2={W - padR} y1={H - padB} y2={H - padB} stroke="#e2e8f0" strokeWidth="1" />
+      </svg>
+    </div>
+  );
+}
+
+// Vertical Bar Chart — Flights by Airline
+function VBarChart({ bars, color }) {
+  const tip = useTooltip();
+  if (!bars.length) return <div className="empty-state" style={{padding:'30px 0'}}>No data</div>;
+  const W = 520, H = 180, padL = 10, padR = 10, padT = 16, padB = 52;
+  const maxV = Math.max(...bars.map(b => b.value), 1);
+  const bw = Math.max(14, Math.floor((W - padL - padR) / bars.length) - 6);
+  const gap = (W - padL - padR - bw * bars.length) / Math.max(bars.length - 1, 1);
+  const bx = (i) => padL + i * (bw + gap);
+  const bh = (v) => ((v / maxV) * (H - padT - padB));
+  const by = (v) => padT + (H - padT - padB) - bh(v);
+  return (
+    <div style={{ position: 'relative' }}>
+      {tip.el}
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: H, display: 'block' }}>
+        {/* Grid */}
+        {[0, Math.round(maxV / 2), maxV].map((v, i) => (
+          <line key={i} x1={padL} x2={W - padR} y1={by(v)} y2={by(v)} stroke="#f1f5f9" strokeWidth="1" />
+        ))}
+        {bars.map((b, i) => (
+          <g key={i}>
+            <rect x={bx(i)} y={by(b.value)} width={bw} height={bh(b.value)} rx="3"
+              fill={b.color || color}
+              className="adb-bar"
+              onMouseEnter={e => tip.show(e, `<strong>${b.label}</strong>${b.value} flights`)}
+              onMouseLeave={tip.hide}
+              onMouseMove={tip.move}
+            />
+            <text x={bx(i) + bw / 2} y={by(b.value) - 4} textAnchor="middle" fontSize="10" fontWeight="700" fill="#475569">{b.value}</text>
+            <text x={bx(i) + bw / 2} y={H - padB + 14} textAnchor="middle" fontSize="9" fill="#94a3b8"
+              style={{ maxWidth: bw + 4 }}>
+              {b.shortLabel || b.label.split(' ').map(w => w[0]).join('')}
+            </text>
+            <text x={bx(i) + bw / 2} y={H - padB + 26} textAnchor="middle" fontSize="8.5" fill="#b0bec5">
+              {b.label.split(' ').slice(-1)[0]}
+            </text>
+          </g>
+        ))}
+        <line x1={padL} x2={W - padR} y1={H - padB} y2={H - padB} stroke="#e2e8f0" strokeWidth="1" />
+      </svg>
+    </div>
+  );
+}
+
+// Big Donut — Flight Status
+function BigDonut({ segments }) {
+  const tip = useTooltip();
+  const total = segments.reduce((s, d) => s + d.value, 0);
+  const size = 160, r = 58, cx = 80, cy = 80;
+  const circ = 2 * Math.PI * r;
+  let off = 0;
+  const segs = segments.map(d => {
+    const len = total ? (d.value / total) * circ : 0;
+    const s = { ...d, off, len };
+    off += len;
+    return s;
+  });
+  return (
+    <div style={{ position: 'relative' }}>
+      {tip.el}
+      <div className="donut-big-wrap">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth="20" />
+          {segs.map((s, i) => (
+            <circle key={i} cx={cx} cy={cy} r={r} fill="none"
+              stroke={s.color} strokeWidth="20"
+              strokeDasharray={`${s.len} ${circ - s.len}`}
+              strokeDashoffset={-s.off}
+              transform={`rotate(-90 ${cx} ${cy})`}
+              style={{ cursor: 'pointer', transition: 'stroke-width .15s' }}
+              onMouseEnter={e => tip.show(e, `<strong>${s.label}</strong>${s.value} flights · ${pct(s.value, total)}%`)}
+              onMouseLeave={tip.hide}
+              onMouseMove={tip.move}
+            />
+          ))}
+          <text x={cx} y={cy - 8} textAnchor="middle" fontSize="22" fontWeight="900" fill="#1a202c">{total}</text>
+          <text x={cx} y={cy + 10} textAnchor="middle" fontSize="10" fill="#718096">flights</text>
+        </svg>
+        <div className="donut-big-legend">
+          {segs.map((s, i) => (
+            <div key={i} className="dbl-item">
+              <div className="dbl-dot" style={{ background: s.color }} />
+              <div className="dbl-info">
+                <div className="dbl-label">{s.label}</div>
+                <div className="dbl-val">{s.value} · {pct(s.value, total)}%</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Horizontal Bar — Top Routes or Avg Delay by Airline
+function HBarChart({ rows, color, unit }) {
+  const tip = useTooltip();
+  if (!rows.length) return <div className="empty-state" style={{padding:'20px 0'}}>No data</div>;
+  const max = Math.max(...rows.map(r => r.value), 1);
+  return (
+    <div style={{ position: 'relative' }}>
+      {tip.el}
+      <div className="hbar-chart">
+        {rows.map((r, i) => (
+          <div key={i} className="hbar-row">
+            <div className="hbar-label" title={r.label}>{r.label}</div>
+            <div className="hbar-track"
+              onMouseEnter={e => tip.show(e, `<strong>${r.label}</strong>${r.value}${unit || ''}`)}
+              onMouseLeave={tip.hide}
+              onMouseMove={tip.move}
+            >
+              <div className="hbar-fill" style={{ width: `${(r.value / max) * 100}%`, background: r.color || color }} />
+            </div>
+            <div className="hbar-val">{r.value}{unit || ''}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OverviewPage({ data }) {
+  // ── KPI stats — calculated dynamically from the full dataset ──
+  const kpi = useMemo(() => {
+    const total      = data.length;
+    const onTime     = data.filter(f => f.flight_status === 'On Time').length;
+    const delayed    = data.filter(f => f.flight_status === 'Delayed').length;
+    const cancelled  = data.filter(f => f.flight_status === 'Cancelled').length;
+    const totalPax   = data.reduce((s, f) => s + f.passengers, 0);
+    const delFlights = data.filter(f => f.delay_minutes > 0);
+    const avgDelay   = delFlights.length
+      ? (delFlights.reduce((s, f) => s + f.delay_minutes, 0) / delFlights.length).toFixed(1)
+      : '0.0';
+    const routes     = new Set(data.map(f => f.route)).size;
+    const airports   = new Set([
+      ...data.map(f => f.origin_airport),
+      ...data.map(f => f.destination_airport),
+    ]).size;
+    const airlines   = new Set(data.map(f => f.airline)).size;
+    return { total, onTime, delayed, cancelled, totalPax, avgDelay, routes, airports, airlines };
+  }, [data]);
+
+  // Date range for the dataset subtitle
+  const dateRange = useMemo(() => {
+    const dates = data.map(f => f.departure_date).sort();
+    if (!dates.length) return '';
+    return `${dates[0]} → ${dates[dates.length - 1]}`;
+  }, [data]);
+
+  return (
+    <div>
+      {/* ── Intro banner ── */}
+      <div style={{
+        background: 'var(--accent-light)',
+        border: '1px solid var(--accent-border)',
+        borderRadius: 'var(--radius)',
+        padding: '14px 20px',
+        marginBottom: 20,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 8,
+      }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--accent)' }}>
+            ✈️ &nbsp;AeroAnalytics — Fleet Summary
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 2 }}>
+            All metrics calculated live from <strong>{fmt(data.length)}</strong> flight records
+            &nbsp;·&nbsp; {dateRange}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <span className="badge badge-green">✓ &nbsp;{fmt(kpi.onTime)} On Time</span>
+          <span className="badge badge-yellow">⏱ &nbsp;{fmt(kpi.delayed)} Delayed</span>
+          <span className="badge badge-red">✕ &nbsp;{fmt(kpi.cancelled)} Cancelled</span>
+        </div>
+      </div>
+
+      {/* ── 7 KPI cards ── */}
+      <div className="section-title">Key Performance Indicators</div>
+      <div className="kpi-grid">
+        <div className="kpi-card kpi-blue">
+          <div className="kpi-icon">✈️</div>
+          <div className="kpi-label">Total Flights</div>
+          <div className="kpi-value kpi-blue">{fmt(kpi.total)}</div>
+          <div className="kpi-sub">{kpi.airlines} airlines operating</div>
+        </div>
+        <div className="kpi-card kpi-purple">
+          <div className="kpi-icon">👥</div>
+          <div className="kpi-label">Total Passengers</div>
+          <div className="kpi-value kpi-purple">
+            {kpi.totalPax >= 1e6 ? (kpi.totalPax / 1e6).toFixed(2) + 'M' : fmt(kpi.totalPax)}
+          </div>
+          <div className="kpi-sub">Across operated flights</div>
+        </div>
+        <div className="kpi-card kpi-teal">
+          <div className="kpi-icon">🏢</div>
+          <div className="kpi-label">Total Airports</div>
+          <div className="kpi-value kpi-teal">{fmt(kpi.airports)}</div>
+          <div className="kpi-sub">Origins &amp; destinations</div>
+        </div>
+        <div className="kpi-card kpi-indigo">
+          <div className="kpi-icon">🗺️</div>
+          <div className="kpi-label">Total Routes</div>
+          <div className="kpi-value kpi-indigo">{fmt(kpi.routes)}</div>
+          <div className="kpi-sub">Unique city pairs</div>
+        </div>
+        <div className="kpi-card kpi-green">
+          <div className="kpi-icon">✅</div>
+          <div className="kpi-label">On-Time Rate</div>
+          <div className="kpi-value kpi-green">{pct(kpi.onTime, kpi.total)}%</div>
+          <div className="kpi-sub">{fmt(kpi.onTime)} on-time flights</div>
+        </div>
+        <div className="kpi-card kpi-yellow">
+          <div className="kpi-icon">⏱️</div>
+          <div className="kpi-label">Average Delay</div>
+          <div className="kpi-value kpi-yellow">
+            {kpi.avgDelay}<span style={{ fontSize: 14, fontWeight: 500 }}> min</span>
+          </div>
+          <div className="kpi-sub">{fmt(kpi.delayed)} delayed flights</div>
+        </div>
+        <div className="kpi-card kpi-red">
+          <div className="kpi-icon">❌</div>
+          <div className="kpi-label">Cancelled Flights</div>
+          <div className="kpi-value kpi-red">{fmt(kpi.cancelled)}</div>
+          <div className="kpi-sub">{pct(kpi.cancelled, kpi.total)}% cancellation rate</div>
+        </div>
+      </div>
+
+      {/* ── Summary table ── */}
+      <div className="section-title">Dataset Summary</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+
+        {/* Operations card */}
+        <div className="card">
+          <div className="card-title">Operations</div>
+          {[
+            ['Total Flights',    fmt(kpi.total)],
+            ['Airlines',         kpi.airlines],
+            ['Routes',           fmt(kpi.routes)],
+            ['Airports',         fmt(kpi.airports)],
+            ['Date Range',       dateRange],
+          ].map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+              padding: '6px 0', borderBottom: '1px solid var(--border-2)', fontSize: 13 }}>
+              <span style={{ color: 'var(--muted)', fontSize: 12 }}>{k}</span>
+              <span style={{ fontWeight: 700, color: 'var(--text)' }}>{v}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Passengers card */}
+        <div className="card">
+          <div className="card-title">Passengers</div>
+          {[
+            ['Total Carried',    kpi.totalPax >= 1e6 ? (kpi.totalPax/1e6).toFixed(2)+'M' : fmt(kpi.totalPax)],
+            ['Avg per Flight',   fmt(Math.round(kpi.totalPax / Math.max(kpi.total - kpi.cancelled, 1)))],
+            ['On Cancelled Flt', '0 (grounded)'],
+          ].map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+              padding: '6px 0', borderBottom: '1px solid var(--border-2)', fontSize: 13 }}>
+              <span style={{ color: 'var(--muted)', fontSize: 12 }}>{k}</span>
+              <span style={{ fontWeight: 700, color: 'var(--text)' }}>{v}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Punctuality card */}
+        <div className="card">
+          <div className="card-title">Punctuality</div>
+          {[
+            ['On-Time Rate',     pct(kpi.onTime, kpi.total) + '%'],
+            ['Delay Rate',       pct(kpi.delayed, kpi.total) + '%'],
+            ['Cancellation Rate',pct(kpi.cancelled, kpi.total) + '%'],
+            ['Avg Delay (min)',  kpi.avgDelay + ' min'],
+          ].map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+              padding: '6px 0', borderBottom: '1px solid var(--border-2)', fontSize: 13 }}>
+              <span style={{ color: 'var(--muted)', fontSize: 12 }}>{k}</span>
+              <span style={{ fontWeight: 700, color: 'var(--text)' }}>{v}</span>
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ─── SHARED PAGE HELPERS ──────────────────────────────────────────────────────
+const PAGE_SIZE = 20;
+
+function Pagination({ page, totalPages, setPage }) {
+  if (totalPages <= 1) return null;
+  const start = Math.max(1, Math.min(page - 3, totalPages - 6));
+  return (
+    <div className="pagination">
+      <span className="page-info">Page {page} of {totalPages}</span>
+      <button className="page-btn" onClick={() => setPage(1)} disabled={page === 1}>«</button>
+      <button className="page-btn" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>‹</button>
+      {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+        const p = start + i;
+        return p <= totalPages
+          ? <button key={p} className={"page-btn" + (p === page ? " active" : "")} onClick={() => setPage(p)}>{p}</button>
+          : null;
+      })}
+      <button className="page-btn" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>›</button>
+      <button className="page-btn" onClick={() => setPage(totalPages)} disabled={page === totalPages}>»</button>
+    </div>
+  );
+}
+
+// Sortable column header
+function SortTh({ col, sort, onSort, children, style }) {
+  const active = sort.col === col;
+  return (
+    <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', ...style }}
+        onClick={() => onSort(col)}>
+      {children}
+      <span style={{ marginLeft: 4, color: active ? '#3b82f6' : '#cbd5e1', fontSize: 10 }}>
+        {active ? (sort.dir === 'asc' ? '▲' : '▼') : '⇅'}
+      </span>
+    </th>
+  );
+}
+
+function useSort(defaultCol, defaultDir = 'asc') {
+  const [sort, setSort] = useState({ col: defaultCol, dir: defaultDir });
+  const onSort = (col) => setSort(s => ({ col, dir: s.col === col && s.dir === 'asc' ? 'desc' : 'asc' }));
+  const sortFn = (arr, getVal) => [...arr].sort((a, b) => {
+    const av = getVal ? getVal(a) : a[sort.col];
+    const bv = getVal ? getVal(b) : b[sort.col];
+    const d = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
+    return sort.dir === 'asc' ? d : -d;
+  });
+  return { sort, onSort, sortFn };
+}
+
+// ─── FLIGHT DETAIL MODAL ──────────────────────────────────────────────────────
+function FlightDetail({ flight, onClose }) {
+  if (!flight) return null;
+  const rows = [
+    ['Flight ID',           flight.flight_id],
+    ['Flight Number',       flight.flight_number],
+    ['Airline',             flight.airline],
+    ['Route',               flight.route],
+    ['Origin',              flight.origin_airport],
+    ['Destination',         flight.destination_airport],
+    ['Departure Date',      flight.departure_date],
+    ['Scheduled Dep',       flight.scheduled_departure],
+    ['Actual Dep',          flight.actual_departure || '—'],
+    ['Scheduled Arr',       flight.scheduled_arrival],
+    ['Actual Arr',          flight.actual_arrival || '—'],
+    ['Status',              flight.flight_status],
+    ['Delay',               flight.delay_minutes > 0 ? flight.delay_minutes + ' min' : '—'],
+    ['Delay Reason',        flight.delay_reason || '—'],
+    ['Aircraft',            flight.aircraft],
+    ['Passengers',          fmt(flight.passengers)],
+    ['Seats',               fmt(flight.seats)],
+    ['Load Factor',         flight.seats > 0 ? pct(flight.passengers, flight.seats) + '%' : '—'],
+    ['Distance',            fmt(flight.distance_km) + ' km'],
+  ];
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <div>
+            <div className="modal-title">{flight.flight_number}</div>
+            <div className="modal-subtitle">{flight.airline} · {flight.route}</div>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            {statusBadge(flight.flight_status)}
+            <button className="modal-close" onClick={onClose}>✕</button>
+          </div>
+        </div>
+        <div className="modal-body">
+          {rows.map(([k, v]) => (
+            <div key={k} className="detail-row">
+              <div className="detail-key">{k}</div>
+              <div className="detail-val">{v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CSV EXPORT HELPER ────────────────────────────────────────────────────────
+function exportCSV(rows, filename) {
+  if (!rows.length) return;
+  const headers = [
+    'Flight ID','Flight #','Airline','Origin','Destination','Route',
+    'Date','Sched Dep','Sched Arr','Actual Dep','Actual Arr',
+    'Status','Delay (min)','Delay Reason','Aircraft','Passengers','Seats','Distance (km)',
+  ];
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const csv = [
+    headers.map(esc).join(','),
+    ...rows.map(f => [
+      f.flight_id, f.flight_number, f.airline, f.origin_airport, f.destination_airport, f.route,
+      f.departure_date, f.scheduled_departure, f.scheduled_arrival,
+      f.actual_departure ?? '', f.actual_arrival ?? '',
+      f.flight_status, f.delay_minutes, f.delay_reason,
+      f.aircraft, f.passengers, f.seats, f.distance_km,
+    ].map(esc).join(',')),
+  ].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── FLIGHTS PAGE ─────────────────────────────────────────────────────────────
+function FlightsPage({ data }) {
+  const [search,   setSearch]   = useState('');
+  const [statusF,  setStatusF]  = useState('All');
+  const [airlineF, setAirlineF] = useState('All');
+  const [originF,  setOriginF]  = useState('All');
+  const [page,     setPage]     = useState(1);
+  const [selected, setSelected] = useState(null);
+  const { sort, onSort } = useSort('departure_date', 'asc');
+
+  const airlines = useMemo(() => ['All', ...Array.from(new Set(data.map(f => f.airline))).sort()], [data]);
+  const origins  = useMemo(() => ['All', ...Array.from(new Set(data.map(f => f.origin_airport))).sort()], [data]);
+
+  const SORT_VALS = {
+    flight_number: f => f.flight_number,
+    airline:       f => f.airline,
+    origin:        f => f.origin_airport,
+    destination:   f => f.destination_airport,
+    departure_date:f => f.departure_date + f.scheduled_departure,
+    status:        f => f.flight_status,
+    delay_minutes: f => f.delay_minutes,
+    passengers:    f => f.passengers,
+    distance_km:   f => f.distance_km,
+  };
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    const base = data.filter(f =>
+      (statusF  === 'All' || f.flight_status   === statusF)  &&
+      (airlineF === 'All' || f.airline          === airlineF) &&
+      (originF  === 'All' || f.origin_airport   === originF)  &&
+      (!q || f.flight_number.toLowerCase().includes(q) ||
+             f.route.toLowerCase().includes(q)         ||
+             f.origin_airport.toLowerCase().includes(q) ||
+             f.destination_airport.toLowerCase().includes(q) ||
+             f.aircraft.toLowerCase().includes(q))
+    );
+    const getV = SORT_VALS[sort.col] || (f => f[sort.col]);
+    return [...base].sort((a, b) => {
+      const av = getV(a), bv = getV(b);
+      const d = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
+      return sort.dir === 'asc' ? d : -d;
+    });
+  }, [data, search, statusF, airlineF, originF, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage   = Math.min(page, totalPages);
+  const paged      = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const resetPage  = () => setPage(1);
+
+  // Summary counts
+  const onTimeCount    = filtered.filter(f => f.flight_status === 'On Time').length;
+  const delayedCount   = filtered.filter(f => f.flight_status === 'Delayed').length;
+  const cancelledCount = filtered.filter(f => f.flight_status === 'Cancelled').length;
+
+  return (
+    <div>
+      {selected && <FlightDetail flight={selected} onClose={() => setSelected(null)} />}
+
+      {/* KPI strip */}
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', marginBottom: 16 }}>
+        <div className="stat-card blue">
+          <div className="label">Showing</div>
+          <div className="value" style={{ fontSize: 22 }}>{fmt(filtered.length)}</div>
+          <div className="sub">of {fmt(data.length)} total flights</div>
+        </div>
+        <div className="stat-card green">
+          <div className="label">On Time</div>
+          <div className="value" style={{ fontSize: 22 }}>{fmt(onTimeCount)}</div>
+          <div className="sub">{pct(onTimeCount, filtered.length)}%</div>
+        </div>
+        <div className="stat-card yellow">
+          <div className="label">Delayed</div>
+          <div className="value" style={{ fontSize: 22 }}>{fmt(delayedCount)}</div>
+          <div className="sub">{pct(delayedCount, filtered.length)}%</div>
+        </div>
+        <div className="stat-card red">
+          <div className="label">Cancelled</div>
+          <div className="value" style={{ fontSize: 22 }}>{fmt(cancelledCount)}</div>
+          <div className="sub">{pct(cancelledCount, filtered.length)}%</div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="filters" style={{ marginBottom: 12 }}>
+        <input className="filter-input" placeholder="🔍  Flight #, route, airport, aircraft…"
+          value={search} onChange={e => { setSearch(e.target.value); resetPage(); }} style={{ minWidth: 260 }} />
+        <span className="filter-label">Status</span>
+        <select className="filter-input" value={statusF} onChange={e => { setStatusF(e.target.value); resetPage(); }}>
+          {['All','On Time','Delayed','Cancelled'].map(s => <option key={s}>{s}</option>)}
+        </select>
+        <span className="filter-label">Airline</span>
+        <select className="filter-input" value={airlineF} onChange={e => { setAirlineF(e.target.value); resetPage(); }}>
+          {airlines.map(a => <option key={a}>{a}</option>)}
+        </select>
+        <span className="filter-label">Origin</span>
+        <select className="filter-input" value={originF} onChange={e => { setOriginF(e.target.value); resetPage(); }}>
+          {origins.map(o => <option key={o}>{o}</option>)}
+        </select>
+        <button className="page-btn"
+          onClick={() => { setSearch(''); setStatusF('All'); setAirlineF('All'); setOriginF('All'); resetPage(); }}>
+          Reset
+        </button>
+        <button className="export-btn" style={{ marginLeft: 'auto' }}
+          onClick={() => exportCSV(filtered, `flights-export-${new Date().toISOString().slice(0,10)}.csv`)}>
+          ⬇ Export CSV ({filtered.length})
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 8 }}>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <SortTh col="flight_number" sort={sort} onSort={onSort}>Flight #</SortTh>
+                <SortTh col="airline"       sort={sort} onSort={onSort}>Airline</SortTh>
+                <SortTh col="origin"        sort={sort} onSort={onSort}>Origin</SortTh>
+                <SortTh col="destination"   sort={sort} onSort={onSort}>Dest</SortTh>
+                <th>Route</th>
+                <SortTh col="departure_date" sort={sort} onSort={onSort}>Date</SortTh>
+                <th>Sched Dep</th>
+                <th>Sched Arr</th>
+                <th>Actual Dep</th>
+                <th>Actual Arr</th>
+                <SortTh col="status"        sort={sort} onSort={onSort}>Status</SortTh>
+                <SortTh col="delay_minutes" sort={sort} onSort={onSort}>Delay</SortTh>
+                <th>Aircraft</th>
+                <SortTh col="passengers"    sort={sort} onSort={onSort}>Pax</SortTh>
+                <SortTh col="distance_km"   sort={sort} onSort={onSort}>Dist</SortTh>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {paged.length === 0 ? (
+                <tr><td colSpan={16}>
+                  <div className="empty-state"><div className="es-icon">✈️</div><div className="es-title">No flights found</div><div className="es-sub">Try adjusting your filters</div></div>
+                </td></tr>
+              ) : paged.map(f => (
+                <tr key={f.flight_id} style={{ cursor: 'pointer' }} onClick={() => setSelected(f)}>
+                  <td><strong style={{ color: '#3b82f6' }}>{f.flight_number}</strong></td>
+                  <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>{f.airline}</td>
+                  <td><span style={{ fontWeight: 700, fontSize: 13 }}>{f.origin_airport}</span></td>
+                  <td><span style={{ fontWeight: 700, fontSize: 13 }}>{f.destination_airport}</span></td>
+                  <td style={{ fontSize: 11, color: '#94a3b8', whiteSpace: 'nowrap' }}>{f.origin_airport} → {f.destination_airport}</td>
+                  <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>{f.departure_date}</td>
+                  <td style={{ fontSize: 12 }}>{f.scheduled_departure}</td>
+                  <td style={{ fontSize: 12 }}>{f.scheduled_arrival}</td>
+                  <td style={{ fontSize: 12, color: f.actual_departure ? '#1a202c' : '#cbd5e1' }}>{f.actual_departure || '—'}</td>
+                  <td style={{ fontSize: 12, color: f.actual_arrival   ? '#1a202c' : '#cbd5e1' }}>{f.actual_arrival   || '—'}</td>
+                  <td>{statusBadge(f.flight_status)}</td>
+                  <td>
+                    {f.delay_minutes > 0
+                      ? <span style={{ color: '#d97706', fontWeight: 700, fontSize: 12 }}>{f.delay_minutes}m</span>
+                      : <span style={{ color: '#cbd5e1' }}>—</span>}
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap', fontSize: 11, color: '#718096' }}>{f.aircraft}</td>
+                  <td style={{ fontSize: 12 }}>{fmt(f.passengers)}</td>
+                  <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{fmt(f.distance_km)} km</td>
+                  <td>
+                    <button onClick={e => { e.stopPropagation(); setSelected(f); }}
+                      style={{ border: '1px solid #e2e8f0', background: '#f8fafc', borderRadius: 5, padding: '3px 8px', cursor: 'pointer', fontSize: 11, color: '#475569' }}>
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <Pagination page={safePage} totalPages={totalPages} setPage={setPage} />
+    </div>
+  );
+}
+
+// ─── ROUTES PAGE ──────────────────────────────────────────────────────────────
+function RoutesPage({ data }) {
+  const [search,  setSearch]  = useState('');
+  const [sortCol, setSortCol] = useState('flights');
+  const [sortDir, setSortDir] = useState('desc');
+  const [page,    setPage]    = useState(1);
+
+  // Build route stats
+  const routes = useMemo(() => {
+    const map = {};
+    data.forEach(f => {
+      const k = f.route;
+      if (!map[k]) map[k] = {
+        route: k, orig: f.origin_airport, dest: f.destination_airport,
+        dist: f.distance_km, airlines: new Set(),
+        flights: 0, onTime: 0, delayed: 0, cancelled: 0, pax: 0, totalDelay: 0,
+      };
+      map[k].flights++;
+      map[k].airlines.add(f.airline);
+      if (f.flight_status === 'On Time')   map[k].onTime++;
+      if (f.flight_status === 'Delayed')   { map[k].delayed++; map[k].totalDelay += f.delay_minutes; }
+      if (f.flight_status === 'Cancelled') map[k].cancelled++;
+      map[k].pax += f.passengers;
+    });
+    return Object.values(map).map(r => ({
+      ...r,
+      airlines: r.airlines.size,
+      avgDelay:   r.delayed > 0 ? Math.round(r.totalDelay / r.delayed) : 0,
+      onTimeRate: parseFloat(pct(r.onTime, r.flights)),
+      cancelRate: parseFloat(pct(r.cancelled, r.flights)),
+      delayRate:  parseFloat(pct(r.delayed, r.flights)),
+    }));
+  }, [data]);
+
+  // Summary KPIs
+  const kpi = useMemo(() => {
+    const sorted = [...routes].sort((a, b) => b.flights - a.flights);
+    const highestDelay = [...routes].sort((a, b) => b.avgDelay - a.avgDelay)[0];
+    return {
+      total:       routes.length,
+      mostPopular: sorted[0],
+      highestDelay,
+      avgFlights:  routes.length ? (data.length / routes.length).toFixed(1) : '0',
+    };
+  }, [routes, data]);
+
+  // Filter + sort
+  const sorted = useMemo(() => {
+    const q = search.toLowerCase();
+    const base = !q ? routes : routes.filter(r =>
+      r.route.toLowerCase().includes(q) || r.orig.toLowerCase().includes(q) || r.dest.toLowerCase().includes(q)
+    );
+    return [...base].sort((a, b) => {
+      const av = a[sortCol], bv = b[sortCol];
+      const d = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
+      return sortDir === 'asc' ? d : -d;
+    });
+  }, [routes, search, sortCol, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const safePage   = Math.min(page, totalPages);
+  const paged      = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const toggleSort = col => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortCol(col); setSortDir('desc'); }
+    setPage(1);
+  };
+  const sortIcon = col => sortCol === col ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ' ⇅';
+
+  // Chart data (top 10 busiest, top 10 highest delay)
+  const busiestRows = useMemo(() =>
+    [...routes].sort((a, b) => b.flights - a.flights).slice(0, 10)
+      .map(r => ({ label: r.route, value: r.flights, color: '#3b82f6' })), [routes]);
+
+  const highDelayRows = useMemo(() =>
+    [...routes].filter(r => r.delayed > 0).sort((a, b) => b.avgDelay - a.avgDelay).slice(0, 10)
+      .map(r => ({ label: r.route, value: r.avgDelay, color: '#f59e0b' })), [routes]);
+
+  // Route performance by airline: avg on-time rate per airline across their routes
+  const airlinePerf = useMemo(() => {
+    const map = {};
+    data.forEach(f => {
+      if (!map[f.airline]) map[f.airline] = { onTime: 0, total: 0 };
+      map[f.airline].total++;
+      if (f.flight_status === 'On Time') map[f.airline].onTime++;
+    });
+    return Object.entries(map)
+      .map(([label, v]) => ({ label, value: parseFloat(pct(v.onTime, v.total)), color: '#10b981' }))
+      .sort((a, b) => b.value - a.value);
+  }, [data]);
+
+  return (
+    <div>
+      {/* KPI cards */}
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', marginBottom: 20 }}>
+        <div className="stat-card blue">
+          <div className="label">Total Routes</div>
+          <div className="value">{fmt(kpi.total)}</div>
+          <div className="sub">{new Set(data.map(f => f.airline)).size} airlines operating</div>
+        </div>
+        <div className="stat-card purple">
+          <div className="label">Most Popular Route</div>
+          <div className="value" style={{ fontSize: 17 }}>{kpi.mostPopular?.route || '—'}</div>
+          <div className="sub">{kpi.mostPopular?.flights} flights · {fmt(kpi.mostPopular?.pax)} pax</div>
+        </div>
+        <div className="stat-card yellow">
+          <div className="label">Highest Delay Route</div>
+          <div className="value" style={{ fontSize: 17 }}>{kpi.highestDelay?.route || '—'}</div>
+          <div className="sub">Avg {kpi.highestDelay?.avgDelay}min delay</div>
+        </div>
+        <div className="stat-card green">
+          <div className="label">Avg Flights / Route</div>
+          <div className="value">{kpi.avgFlights}</div>
+          <div className="sub">{fmt(data.length)} total flights</div>
+        </div>
+      </div>
+
+      {/* Charts row */}
+      <div className="chart-grid-mid" style={{ marginBottom: 20 }}>
+        <div className="chart-card">
+          <div className="chart-title" style={{ marginBottom: 12 }}>Top 10 Busiest Routes</div>
+          <HBarChart rows={busiestRows} color="#3b82f6" />
+        </div>
+        <div className="chart-card">
+          <div className="chart-title" style={{ marginBottom: 12 }}>Top 10 Highest Avg Delay Routes</div>
+          <HBarChart rows={highDelayRows} color="#f59e0b" unit=" min" />
+        </div>
+      </div>
+      <div className="chart-grid-bot" style={{ marginBottom: 20 }}>
+        <div className="chart-card">
+          <div className="chart-title" style={{ marginBottom: 12 }}>On-Time Rate by Airline (Route Performance)</div>
+          <HBarChart rows={airlinePerf} color="#10b981" unit="%" />
+        </div>
+      </div>
+
+      {/* Filter bar */}
+      <div className="filters" style={{ marginBottom: 12 }}>
+        <input className="filter-input" placeholder="🔍  Search route or airport code…"
+          value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={{ minWidth: 260 }} />
+        <span className="filter-label" style={{ marginLeft: 'auto' }}>{sorted.length} routes</span>
+      </div>
+
+      {/* Route table */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 8 }}>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {[
+                  ['route','Route'], ['dist','Distance'], ['flights','Flights'], ['pax','Passengers'],
+                  ['avgDelay','Avg Delay'], ['onTimeRate','On-Time %'], ['delayRate','Delay %'],
+                  ['cancelRate','Cancel %'], ['airlines','Airlines'],
+                ].map(([col, label]) => (
+                  <th key={col} style={{ cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none' }}
+                    onClick={() => toggleSort(col)}>
+                    {label}<span style={{ color: sortCol === col ? '#3b82f6' : '#cbd5e1', fontSize: 10 }}>{sortIcon(col)}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {paged.length === 0 ? (
+                <tr><td colSpan={9}><div className="empty-state"><div className="es-icon">🗺️</div><div className="es-title">No routes found</div><div className="es-sub">Try a different search term</div></div></td></tr>
+              ) : paged.map((r, i) => (
+                <tr key={i}>
+                  <td><strong style={{ color: '#3b82f6', fontSize: 13 }}>{r.route}</strong></td>
+                  <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{fmt(r.dist)} km</td>
+                  <td style={{ fontWeight: 700 }}>{r.flights}</td>
+                  <td style={{ fontSize: 12 }}>{fmt(r.pax)}</td>
+                  <td>
+                    {r.avgDelay > 0
+                      ? <span style={{ color: '#d97706', fontWeight: 700 }}>{r.avgDelay}m</span>
+                      : <span style={{ color: '#94a3b8' }}>—</span>}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ flex: 1, height: 6, background: '#f1f5f9', borderRadius: 3, overflow: 'hidden', minWidth: 40 }}>
+                        <div style={{ height: '100%', width: r.onTimeRate + '%', background: '#10b981', borderRadius: 3 }} />
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#10b981', width: 38, textAlign: 'right' }}>{r.onTimeRate}%</span>
+                    </div>
+                  </td>
+                  <td><span style={{ color: '#f59e0b', fontWeight: 600, fontSize: 12 }}>{r.delayRate}%</span></td>
+                  <td><span style={{ color: '#ef4444', fontWeight: 600, fontSize: 12 }}>{r.cancelRate}%</span></td>
+                  <td style={{ fontSize: 12, color: '#718096' }}>{r.airlines}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <Pagination page={safePage} totalPages={totalPages} setPage={setPage} />
+    </div>
+  );
+}
+
+// ─── AIRPORTS PAGE ────────────────────────────────────────────────────────────
+function AirportsPage({ data, airportsMeta }) {
+  const [search,  setSearch]  = useState('');
+  const [sortCol, setSortCol] = useState('totalFlights');
+  const [sortDir, setSortDir] = useState('desc');
+  const [page,    setPage]    = useState(1);
+  const [view,    setView]    = useState('table'); // 'table' | 'cards'
+
+  // Build airport stats
+  const airports = useMemo(() => {
+    const metaMap = {};
+    airportsMeta.forEach(a => { metaMap[a.code] = a; });
+    const map = {};
+    data.forEach(f => {
+      // init both airports
+      [f.origin_airport, f.destination_airport].forEach(code => {
+        if (!map[code]) {
+          const m = metaMap[code] || { name: code, city: 'Unknown', country: 'Unknown' };
+          map[code] = { code, name: m.name, city: m.city, country: m.country,
+            departures: 0, arrivals: 0, delayed: 0, cancelled: 0, onTime: 0, pax: 0, totalDelay: 0 };
+        }
+      });
+      map[f.origin_airport].departures++;
+      map[f.destination_airport].arrivals++;
+      if (f.flight_status === 'On Time')   map[f.origin_airport].onTime++;
+      if (f.flight_status === 'Delayed')   { map[f.origin_airport].delayed++; map[f.origin_airport].totalDelay += f.delay_minutes; }
+      if (f.flight_status === 'Cancelled') map[f.origin_airport].cancelled++;
+      map[f.origin_airport].pax += f.passengers;
+    });
+    return Object.values(map).map(a => ({
+      ...a,
+      totalFlights: a.departures + a.arrivals,
+      avgDelay:     a.delayed > 0 ? Math.round(a.totalDelay / a.delayed) : 0,
+      onTimeRate:   parseFloat(pct(a.onTime, a.departures)),
+      cancelRate:   parseFloat(pct(a.cancelled, a.departures)),
+      delayRate:    parseFloat(pct(a.delayed, a.departures)),
+    }));
+  }, [data, airportsMeta]);
+
+  // KPIs
+  const kpi = useMemo(() => {
+    const byFlights = [...airports].sort((a, b) => b.totalFlights - a.totalFlights);
+    const byPax     = [...airports].sort((a, b) => b.pax - a.pax);
+    const byDelay   = [...airports].filter(a => a.delayed > 0).sort((a, b) => b.avgDelay - a.avgDelay);
+    return {
+      total:    airports.length,
+      countries: new Set(airports.map(a => a.country)).size,
+      busiest:  byFlights[0],
+      topPax:   byPax[0],
+      mostDelay:byDelay[0],
+      totalPax: airports.reduce((s, a) => s + a.pax, 0),
+    };
+  }, [airports]);
+
+  // Chart data
+  const busiestRows = useMemo(() =>
+    [...airports].sort((a, b) => b.totalFlights - a.totalFlights).slice(0, 15)
+      .map(a => ({ label: a.code, value: a.totalFlights, color: '#3b82f6' })), [airports]);
+
+  const paxRows = useMemo(() =>
+    [...airports].sort((a, b) => b.pax - a.pax).slice(0, 15)
+      .map(a => ({ label: a.code, value: a.pax, color: '#8b5cf6' })), [airports]);
+
+  const delayRows = useMemo(() =>
+    [...airports].filter(a => a.delayed > 0).sort((a, b) => b.avgDelay - a.avgDelay).slice(0, 15)
+      .map(a => ({ label: a.code, value: a.avgDelay, color: '#f59e0b' })), [airports]);
+
+  // Filter + sort
+  const sorted = useMemo(() => {
+    const q = search.toLowerCase();
+    const base = !q ? airports : airports.filter(a =>
+      a.code.toLowerCase().includes(q)    || a.name.toLowerCase().includes(q) ||
+      a.city.toLowerCase().includes(q)    || a.country.toLowerCase().includes(q)
+    );
+    return [...base].sort((a, b) => {
+      const av = a[sortCol], bv = b[sortCol];
+      const d = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
+      return sortDir === 'asc' ? d : -d;
+    });
+  }, [airports, search, sortCol, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const safePage   = Math.min(page, totalPages);
+  const paged      = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const toggleSort = col => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortCol(col); setSortDir('desc'); }
+    setPage(1);
+  };
+  const sortIcon = col => sortCol === col ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ' ⇅';
+
+  return (
+    <div>
+      {/* KPI cards */}
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(5,1fr)', marginBottom: 20 }}>
+        <div className="stat-card blue">
+          <div className="label">Active Airports</div>
+          <div className="value">{fmt(kpi.total)}</div>
+          <div className="sub">{kpi.countries} countries</div>
+        </div>
+        <div className="stat-card purple">
+          <div className="label">Busiest Airport</div>
+          <div className="value" style={{ fontSize: 20 }}>{kpi.busiest?.code || '—'}</div>
+          <div className="sub">{fmt(kpi.busiest?.totalFlights)} movements</div>
+        </div>
+        <div className="stat-card indigo" style={{ '--indigo':'#6366f1' }}>
+          <div className="label">Top Pax Airport</div>
+          <div className="value" style={{ fontSize: 20, color: '#6366f1' }}>{kpi.topPax?.code || '—'}</div>
+          <div className="sub">{kpi.topPax?.pax >= 1e6 ? (kpi.topPax.pax/1e6).toFixed(2)+'M' : fmt(kpi.topPax?.pax)} passengers</div>
+        </div>
+        <div className="stat-card yellow">
+          <div className="label">Most Delayed Airport</div>
+          <div className="value" style={{ fontSize: 20 }}>{kpi.mostDelay?.code || '—'}</div>
+          <div className="sub">Avg {kpi.mostDelay?.avgDelay}min delay</div>
+        </div>
+        <div className="stat-card green">
+          <div className="label">Total Passengers</div>
+          <div className="value">{kpi.totalPax >= 1e6 ? (kpi.totalPax/1e6).toFixed(2)+'M' : fmt(kpi.totalPax)}</div>
+          <div className="sub">Across all departures</div>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="chart-grid-mid" style={{ marginBottom: 20 }}>
+        <div className="chart-card">
+          <div className="chart-title" style={{ marginBottom: 12 }}>Busiest Airports — Total Movements</div>
+          <HBarChart rows={busiestRows} color="#3b82f6" />
+        </div>
+        <div className="chart-card">
+          <div className="chart-title" style={{ marginBottom: 12 }}>Passenger Traffic by Airport</div>
+          <HBarChart rows={paxRows} color="#8b5cf6" />
+        </div>
+      </div>
+      <div className="chart-grid-bot" style={{ marginBottom: 20 }}>
+        <div className="chart-card">
+          <div className="chart-title" style={{ marginBottom: 12 }}>Average Departure Delay by Airport</div>
+          <HBarChart rows={delayRows} color="#f59e0b" unit=" min" />
+        </div>
+      </div>
+
+      {/* Filter + view toggle */}
+      <div className="filters" style={{ marginBottom: 12 }}>
+        <input className="filter-input" placeholder="🔍  Airport code, name, city, country…"
+          value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} style={{ minWidth: 260 }} />
+        <span className="filter-label" style={{ marginLeft: 'auto' }}>{sorted.length} airports</span>
+        <button className="page-btn" onClick={() => setView('table')}
+          style={{ background: view === 'table' ? '#3b82f6' : '', color: view === 'table' ? '#fff' : '' }}>
+          ☰ Table
+        </button>
+        <button className="page-btn" onClick={() => setView('cards')}
+          style={{ background: view === 'cards' ? '#3b82f6' : '', color: view === 'cards' ? '#fff' : '' }}>
+          ⊞ Cards
+        </button>
+      </div>
+
+      {/* Table view */}
+      {view === 'table' && (
+        <>
+          <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 8 }}>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    {[
+                      ['code','Code'],['name','Airport'],['city','City'],['country','Country'],
+                      ['departures','Dep'],['arrivals','Arr'],['totalFlights','Total'],
+                      ['pax','Passengers'],['avgDelay','Avg Delay'],
+                      ['onTimeRate','On-Time %'],['delayRate','Delay %'],['cancelRate','Cancel %'],
+                    ].map(([col, label]) => (
+                      <th key={col} style={{ cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none' }}
+                        onClick={() => toggleSort(col)}>
+                        {label}<span style={{ color: sortCol === col ? '#3b82f6' : '#cbd5e1', fontSize: 10 }}>{sortIcon(col)}</span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paged.length === 0 ? (
+                    <tr><td colSpan={12}><div className="empty-state"><div className="es-icon">🏢</div><div className="es-title">No airports found</div><div className="es-sub">Try a different search term</div></div></td></tr>
+                  ) : paged.map(a => (
+                    <tr key={a.code}>
+                      <td><strong style={{ color: '#3b82f6', fontSize: 15, letterSpacing: 1 }}>{a.code}</strong></td>
+                      <td style={{ fontSize: 12 }}>{a.name}</td>
+                      <td style={{ fontSize: 12, color: '#718096' }}>{a.city}</td>
+                      <td><span className="badge badge-gray" style={{ fontSize: 10 }}>{a.country}</span></td>
+                      <td style={{ fontWeight: 600 }}>{a.departures}</td>
+                      <td style={{ fontWeight: 600 }}>{a.arrivals}</td>
+                      <td style={{ fontWeight: 700, color: '#3b82f6' }}>{a.totalFlights}</td>
+                      <td style={{ fontSize: 12 }}>{a.pax >= 1e6 ? (a.pax/1e6).toFixed(2)+'M' : fmt(a.pax)}</td>
+                      <td>
+                        {a.avgDelay > 0
+                          ? <span style={{ color: '#d97706', fontWeight: 700 }}>{a.avgDelay}m</span>
+                          : <span style={{ color: '#94a3b8' }}>—</span>}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <div style={{ flex: 1, height: 5, background: '#f1f5f9', borderRadius: 3, overflow: 'hidden', minWidth: 36 }}>
+                            <div style={{ height: '100%', width: a.onTimeRate + '%', background: '#10b981', borderRadius: 3 }} />
+                          </div>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981', width: 36 }}>{a.onTimeRate}%</span>
+                        </div>
+                      </td>
+                      <td><span style={{ color: '#f59e0b', fontWeight: 600, fontSize: 12 }}>{a.delayRate}%</span></td>
+                      <td><span style={{ color: '#ef4444', fontWeight: 600, fontSize: 12 }}>{a.cancelRate}%</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <Pagination page={safePage} totalPages={totalPages} setPage={setPage} />
+        </>
+      )}
+
+      {/* Cards view */}
+      {view === 'cards' && (
+        <>
+          <div className="airport-grid">
+            {paged.map(a => (
+              <div className="airport-card" key={a.code}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div className="airport-code">{a.code}</div>
+                    <div className="airport-name">{a.name}</div>
+                    <div className="airport-city">{a.city}, {a.country}</div>
+                  </div>
+                  <span className="badge badge-blue">{a.country}</span>
+                </div>
+                <div className="airport-stats">
+                  <div className="ap-stat"><div className="val">{a.departures}</div><div className="lab">Dep</div></div>
+                  <div className="ap-stat"><div className="val">{a.arrivals}</div><div className="lab">Arr</div></div>
+                  <div className="ap-stat"><div className="val">{a.pax >= 1e6 ? (a.pax/1e6).toFixed(1)+'M' : fmt(a.pax)}</div><div className="lab">Pax</div></div>
+                  <div className="ap-stat"><div className="val" style={{ color: '#f59e0b' }}>{a.delayed}</div><div className="lab">Delayed</div></div>
+                  <div className="ap-stat"><div className="val" style={{ color: '#ef4444' }}>{a.cancelled}</div><div className="lab">Cancelled</div></div>
+                </div>
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#94a3b8', marginBottom: 3 }}>
+                    <span>On-Time {a.onTimeRate}%</span>
+                    <span>Avg Delay {a.avgDelay > 0 ? a.avgDelay + 'm' : '—'}</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: a.onTimeRate + '%', background: '#10b981' }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Pagination page={safePage} totalPages={totalPages} setPage={setPage} />
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── PASSENGERS PAGE ──────────────────────────────────────────────────────────
+function PassengersPage({ data: allData }) {
+  const [airlineF, setAirlineF] = useState('All');
+  const [search,   setSearch]   = useState('');
+  const [page,     setPage]     = useState(1);
+
+  const airlineOpts = useMemo(() =>
+    ['All', ...Array.from(new Set(allData.map(f => f.airline))).sort()], [allData]);
+
+  // Apply airline filter
+  const data = useMemo(() =>
+    airlineF === 'All' ? allData : allData.filter(f => f.airline === airlineF),
+    [allData, airlineF]);
+
+  // ── Aggregations ────────────────────────────────────────────
+  const stats = useMemo(() => {
+    const opFlights  = data.filter(f => f.flight_status !== 'Cancelled');
+    const total      = data.reduce((s, f) => s + f.passengers, 0);
+    const totalSeats = data.reduce((s, f) => s + f.seats, 0);
+    const loadFactor = totalSeats > 0 ? ((total / totalSeats) * 100).toFixed(1) : '0.0';
+    const avgPax     = opFlights.length ? (total / opFlights.length).toFixed(0) : '0';
+
+    // By airline
+    const byAirline = {};
+    data.forEach(f => {
+      if (!byAirline[f.airline]) byAirline[f.airline] = { pax: 0, seats: 0, flights: 0 };
+      byAirline[f.airline].pax   += f.passengers;
+      byAirline[f.airline].seats += f.seats;
+      byAirline[f.airline].flights++;
+    });
+    const airlineRows = Object.entries(byAirline)
+      .sort((a, b) => b[1].pax - a[1].pax)
+      .map(([label, v]) => ({
+        label, pax: v.pax, seats: v.seats, flights: v.flights,
+        loadFactor: v.seats > 0 ? ((v.pax / v.seats) * 100).toFixed(1) : '0.0',
+      }));
+
+    // By airport (departures only)
+    const byAirport = {};
+    data.forEach(f => {
+      if (!byAirport[f.origin_airport]) byAirport[f.origin_airport] = 0;
+      byAirport[f.origin_airport] += f.passengers;
+    });
+    const airportRows = Object.entries(byAirport)
+      .sort((a, b) => b[1] - a[1]).slice(0, 15)
+      .map(([label, value]) => ({ label, value, color: '#0891b2' }));
+
+    // By route
+    const byRoute = {};
+    data.forEach(f => {
+      if (!byRoute[f.route]) byRoute[f.route] = { pax: 0, flights: 0, seats: 0 };
+      byRoute[f.route].pax    += f.passengers;
+      byRoute[f.route].flights++;
+      byRoute[f.route].seats  += f.seats;
+    });
+    const routeRows = Object.entries(byRoute)
+      .sort((a, b) => b[1].pax - a[1].pax).slice(0, 10)
+      .map(([label, v]) => ({
+        label, pax: v.pax, flights: v.flights,
+        loadFactor: v.seats > 0 ? ((v.pax / v.seats) * 100).toFixed(1) : '0.0',
+        color: '#8b5cf6',
+      }));
+
+    // By date (trend)
+    const byDate = {};
+    data.forEach(f => {
+      if (!byDate[f.departure_date]) byDate[f.departure_date] = 0;
+      byDate[f.departure_date] += f.passengers;
+    });
+    const trendPoints = Object.entries(byDate)
+      .sort((a, b) => a[0] > b[0] ? 1 : -1)
+      .map(([x, y]) => ({ x, y }));
+
+    // Top airline / route
+    const topAirline = airlineRows[0] || null;
+    const topRoute   = routeRows[0]   || null;
+
+    return { total, totalSeats, loadFactor, avgPax, airlineRows, airportRows, routeRows, trendPoints, topAirline, topRoute };
+  }, [data]);
+
+  // Airline table with search + pagination
+  const tableData = useMemo(() => {
+    const q = search.toLowerCase();
+    return !q ? stats.airlineRows
+      : stats.airlineRows.filter(r => r.label.toLowerCase().includes(q));
+  }, [stats.airlineRows, search]);
+
+  const totalPages = Math.max(1, Math.ceil(tableData.length / PAGE_SIZE));
+  const safePage   = Math.min(page, totalPages);
+  const paged      = tableData.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // hbar rows for airline pax chart
+  const airlineHBar = stats.airlineRows.map(r => ({ label: r.label, value: r.pax, color: '#8b5cf6' }));
+
+  return (
+    <div>
+      {/* Filters */}
+      <div className="filters" style={{ marginBottom: 16 }}>
+        <span className="filter-label">Airline</span>
+        <select className="filter-input" value={airlineF} onChange={e => { setAirlineF(e.target.value); setPage(1); }}>
+          {airlineOpts.map(a => <option key={a}>{a}</option>)}
+        </select>
+        <button className="page-btn" style={{ marginLeft: 4 }} onClick={() => { setAirlineF('All'); setPage(1); }}>Reset</button>
+        <span className="gf-count" style={{ marginLeft: 'auto' }}>{data.length} / {allData.length} flights</span>
+      </div>
+
+      {/* KPI cards */}
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', marginBottom: 20 }}>
+        <div className="stat-card purple">
+          <div className="label">Total Passengers</div>
+          <div className="value">{stats.total >= 1e6 ? (stats.total/1e6).toFixed(2)+'M' : fmt(stats.total)}</div>
+          <div className="sub">Across operated flights</div>
+        </div>
+        <div className="stat-card blue">
+          <div className="label">Avg Pax / Flight</div>
+          <div className="value">{fmt(Number(stats.avgPax))}</div>
+          <div className="sub">Operated flights only</div>
+        </div>
+        <div className="stat-card green">
+          <div className="label">Avg Seat Occupancy</div>
+          <div className="value">{stats.loadFactor}%</div>
+          <div className="sub">Passengers ÷ Available Seats × 100</div>
+        </div>
+        <div className="stat-card yellow">
+          <div className="label">Top Airline</div>
+          <div className="value" style={{ fontSize: 16 }}>{stats.topAirline?.label || '—'}</div>
+          <div className="sub">{stats.topAirline ? fmt(stats.topAirline.pax)+' pax · '+stats.topAirline.loadFactor+'% load' : ''}</div>
+        </div>
+      </div>
+
+      {/* Row 1: Passengers by Airline + By Airport */}
+      <div className="chart-grid-mid" style={{ marginBottom: 16 }}>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Passengers by Airline</div>
+            <div className="chart-subtitle">Total boarded passengers per carrier</div></div>
+          </div>
+          <HBarChart rows={airlineHBar} color="#8b5cf6" />
+        </div>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Passengers by Departure Airport</div>
+            <div className="chart-subtitle">Top 15 origin airports by passenger volume</div></div>
+          </div>
+          <HBarChart rows={stats.airportRows} color="#0891b2" />
+        </div>
+      </div>
+
+      {/* Row 2: Passengers by Route + Trend */}
+      <div className="chart-grid-mid" style={{ marginBottom: 16 }}>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Top 10 Routes by Passenger Volume</div>
+            <div className="chart-subtitle">Origin → Destination pairs</div></div>
+          </div>
+          <HBarChart rows={stats.routeRows.map(r => ({ label: r.label, value: r.pax, color: '#8b5cf6' }))} color="#8b5cf6" />
+        </div>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Passenger Trend Over Time</div>
+            <div className="chart-subtitle">Daily total passengers</div></div>
+          </div>
+          <LineChart points={stats.trendPoints} color="#8b5cf6" />
+        </div>
+      </div>
+
+      {/* Load Factor chart */}
+      <div className="chart-grid-bot" style={{ marginBottom: 16 }}>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Load Factor by Airline</div>
+            <div className="chart-subtitle">Passengers ÷ Available Seats × 100</div></div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {stats.airlineRows.map((r, i) => {
+              const lf = parseFloat(r.loadFactor);
+              const col = lf >= 90 ? '#10b981' : lf >= 80 ? '#3b82f6' : '#f59e0b';
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 140, fontSize: 12, color: '#718096', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.label}>{r.label}</div>
+                  <div style={{ flex: 1, height: 14, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: lf + '%', background: col, borderRadius: 4, transition: 'width .4s' }} />
+                  </div>
+                  <div style={{ width: 48, textAlign: 'right', fontSize: 12, fontWeight: 700, color: col }}>{r.loadFactor}%</div>
+                  <div style={{ width: 60, textAlign: 'right', fontSize: 11, color: '#94a3b8' }}>{fmt(r.pax)} pax</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Airline detail table */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 8 }}>
+        <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>Airline Passenger Detail</span>
+          <input className="filter-input" placeholder="🔍 Search airline…" value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            style={{ marginLeft: 'auto', minWidth: 200, padding: '4px 10px', fontSize: 12 }} />
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Airline</th>
+                <th>Flights</th>
+                <th>Passengers</th>
+                <th>Seats</th>
+                <th>Load Factor</th>
+                <th>Avg Pax / Flight</th>
+                <th>Load Visual</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paged.length === 0 ? (
+                <tr><td colSpan={7}><div className="empty-state"><div className="es-icon">👥</div><div className="es-title">No data</div></div></td></tr>
+              ) : paged.map((r, i) => {
+                const lf = parseFloat(r.loadFactor);
+                const col = lf >= 90 ? '#10b981' : lf >= 80 ? '#3b82f6' : '#f59e0b';
+                return (
+                  <tr key={i}>
+                    <td><strong>{r.label}</strong></td>
+                    <td>{fmt(r.flights)}</td>
+                    <td style={{ fontWeight: 700, color: '#8b5cf6' }}>{fmt(r.pax)}</td>
+                    <td style={{ color: '#718096' }}>{fmt(r.seats)}</td>
+                    <td><span style={{ fontWeight: 700, color: col }}>{r.loadFactor}%</span></td>
+                    <td>{r.flights > 0 ? fmt(Math.round(r.pax / r.flights)) : '—'}</td>
+                    <td style={{ minWidth: 100 }}>
+                      <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: lf + '%', background: col, borderRadius: 3 }} />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <Pagination page={safePage} totalPages={totalPages} setPage={setPage} />
+
+      {/* Top Routes table */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginTop: 16 }}>
+        <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f1f5f9' }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>Top Routes — Passenger &amp; Load Factor Detail</span>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Route</th>
+                <th>Flights</th>
+                <th>Passengers</th>
+                <th>Load Factor</th>
+                <th>Avg Pax / Flight</th>
+                <th>Load Visual</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.routeRows.map((r, i) => {
+                const lf = parseFloat(r.loadFactor);
+                const col = lf >= 90 ? '#10b981' : lf >= 80 ? '#3b82f6' : '#f59e0b';
+                return (
+                  <tr key={i}>
+                    <td><strong style={{ color: '#8b5cf6' }}>{r.label}</strong></td>
+                    <td>{r.flights}</td>
+                    <td style={{ fontWeight: 700 }}>{fmt(r.pax)}</td>
+                    <td><span style={{ fontWeight: 700, color: col }}>{r.loadFactor}%</span></td>
+                    <td>{r.flights > 0 ? fmt(Math.round(r.pax / r.flights)) : '—'}</td>
+                    <td style={{ minWidth: 100 }}>
+                      <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: lf + '%', background: col, borderRadius: 3 }} />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── DELAYS PAGE ──────────────────────────────────────────────────────────────
+
+// Maps dataset reason strings → 7 canonical categories
+const REASON_MAP = {
+  'Weather':            'Weather',
+  'Air traffic control':'Air Traffic',
+  'Late aircraft':      'Late Aircraft',
+  'Mechanical issue':   'Technical Issue',
+  'Crew availability':  'Crew',
+  'Fueling delay':      'Technical Issue',
+  'Security screening': 'Security',
+  'Boarding delay':     'Other',
+  'Connecting flight':  'Other',
+  'Catering delay':     'Other',
+};
+const REASON_COLORS = {
+  'Weather':       '#3b82f6',
+  'Air Traffic':   '#8b5cf6',
+  'Late Aircraft': '#f59e0b',
+  'Technical Issue':'#ef4444',
+  'Crew':          '#10b981',
+  'Security':      '#0891b2',
+  'Other':         '#94a3b8',
+};
+function canonReason(r) { return REASON_MAP[r] || 'Other'; }
+
+function DelaysPage({ data: allData }) {
+  const [airlineF, setAirlineF] = useState('All');
+  const [reasonF,  setReasonF]  = useState('All');
+  const [search,   setSearch]   = useState('');
+  const [page,     setPage]     = useState(1);
+
+  const airlineOpts = useMemo(() =>
+    ['All', ...Array.from(new Set(allData.map(f => f.airline))).sort()], [allData]);
+  const reasonOpts = ['All', 'Weather', 'Air Traffic', 'Late Aircraft', 'Technical Issue', 'Crew', 'Security', 'Other'];
+
+  // Apply filters
+  const data = useMemo(() => allData.filter(f => {
+    if (airlineF !== 'All' && f.airline !== airlineF) return false;
+    if (reasonF  !== 'All' && f.delay_reason && canonReason(f.delay_reason) !== reasonF) return false;
+    if (reasonF  !== 'All' && !f.delay_reason) return false;
+    return true;
+  }), [allData, airlineF, reasonF]);
+
+  // ── Aggregations ────────────────────────────────────────────
+  const stats = useMemo(() => {
+    const delayed    = data.filter(f => f.flight_status === 'Delayed');
+    const cancelled  = data.filter(f => f.flight_status === 'Cancelled');
+    const totalDelay = delayed.reduce((s, f) => s + f.delay_minutes, 0);
+    const avgDelay   = delayed.length ? (totalDelay / delayed.length).toFixed(1) : '0.0';
+    const maxDelay   = delayed.length ? Math.max(...delayed.map(f => f.delay_minutes)) : 0;
+    const delayRate  = parseFloat(pct(delayed.length,   data.length));
+    const cancelRate = parseFloat(pct(cancelled.length, data.length));
+
+    // Canonical reasons
+    const byReason = {};
+    data.filter(f => f.delay_reason).forEach(f => {
+      const cat = canonReason(f.delay_reason);
+      if (!byReason[cat]) byReason[cat] = { count: 0, totalMin: 0 };
+      byReason[cat].count++;
+      byReason[cat].totalMin += f.delay_minutes;
+    });
+    const reasonRows = Object.entries(byReason)
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([label, v]) => ({
+        label, value: v.count,
+        avgMin: (v.totalMin / v.count).toFixed(0),
+        color: REASON_COLORS[label] || '#94a3b8',
+      }));
+
+    // By airline
+    const byAirline = {};
+    data.forEach(f => {
+      if (!byAirline[f.airline]) byAirline[f.airline] = { delayed: 0, cancelled: 0, total: 0, totalDelay: 0 };
+      byAirline[f.airline].total++;
+      if (f.flight_status === 'Delayed')   { byAirline[f.airline].delayed++; byAirline[f.airline].totalDelay += f.delay_minutes; }
+      if (f.flight_status === 'Cancelled') byAirline[f.airline].cancelled++;
+    });
+    const airlineRows = Object.entries(byAirline)
+      .sort((a, b) => b[1].delayed - a[1].delayed)
+      .map(([label, v]) => ({
+        label,
+        total:      v.total,
+        delayed:    v.delayed,
+        cancelled:  v.cancelled,
+        totalDelay: v.totalDelay,
+        delayRate:  pct(v.delayed,    v.total),
+        cancelRate: pct(v.cancelled,  v.total),
+        avgDelay:   v.delayed ? (v.totalDelay / v.delayed).toFixed(1) : '0.0',
+      }));
+
+    // By airport
+    const byAirport = {};
+    data.filter(f => f.flight_status === 'Delayed').forEach(f => {
+      if (!byAirport[f.origin_airport]) byAirport[f.origin_airport] = { delayed: 0, totalDelay: 0 };
+      byAirport[f.origin_airport].delayed++;
+      byAirport[f.origin_airport].totalDelay += f.delay_minutes;
+    });
+    const airportRows = Object.entries(byAirport)
+      .sort((a, b) => b[1].delayed - a[1].delayed).slice(0, 15)
+      .map(([label, v]) => ({
+        label,
+        value: v.delayed,
+        avgDelay: Math.round(v.totalDelay / v.delayed),
+        color: '#f59e0b',
+      }));
+    const airportAvgRows = [...airportRows]
+      .sort((a, b) => b.avgDelay - a.avgDelay)
+      .map(r => ({ label: r.label, value: r.avgDelay, color: '#ef4444' }));
+
+    // By route
+    const byRoute = {};
+    data.filter(f => f.flight_status === 'Delayed').forEach(f => {
+      if (!byRoute[f.route]) byRoute[f.route] = { delayed: 0, totalDelay: 0 };
+      byRoute[f.route].delayed++;
+      byRoute[f.route].totalDelay += f.delay_minutes;
+    });
+    const routeRows = Object.entries(byRoute)
+      .sort((a, b) => b[1].delayed - a[1].delayed).slice(0, 10)
+      .map(([label, v]) => ({
+        label,
+        value: v.delayed,
+        avgDelay: Math.round(v.totalDelay / v.delayed),
+        color: '#8b5cf6',
+      }));
+
+    // Delay trend by date
+    const byDate = {};
+    data.filter(f => f.flight_status === 'Delayed').forEach(f => {
+      if (!byDate[f.departure_date]) byDate[f.departure_date] = 0;
+      byDate[f.departure_date]++;
+    });
+    const trendPoints = Object.entries(byDate)
+      .sort((a, b) => a[0] > b[0] ? 1 : -1)
+      .map(([x, y]) => ({ x, y }));
+
+    // Duration buckets
+    const buckets = [
+      { label: '< 30m',    min: 0,   max: 30,  count: 0, color: '#10b981' },
+      { label: '30–60m',   min: 30,  max: 60,  count: 0, color: '#3b82f6' },
+      { label: '60–120m',  min: 60,  max: 120, count: 0, color: '#f59e0b' },
+      { label: '120–180m', min: 120, max: 180, count: 0, color: '#ef4444' },
+      { label: '> 180m',   min: 180, max: Infinity, count: 0, color: '#7c2d12' },
+    ];
+    delayed.forEach(f => {
+      const b = buckets.find(b => f.delay_minutes >= b.min && f.delay_minutes < b.max);
+      if (b) b.count++;
+    });
+    const bucketRows = buckets.map(b => ({ label: b.label, value: b.count, color: b.color }));
+
+    return {
+      delayed, cancelled, totalDelay, avgDelay, maxDelay,
+      delayRate, cancelRate,
+      reasonRows, airlineRows, airportRows, airportAvgRows,
+      routeRows, trendPoints, bucketRows,
+    };
+  }, [data]);
+
+  // Searchable delayed-flights table
+  const tableFlights = useMemo(() => {
+    const base = allData.filter(f => f.flight_status === 'Delayed' &&
+      (airlineF === 'All' || f.airline === airlineF) &&
+      (reasonF  === 'All' || (f.delay_reason && canonReason(f.delay_reason) === reasonF)));
+    if (!search) return base;
+    const q = search.toLowerCase();
+    return base.filter(f =>
+      f.flight_number.toLowerCase().includes(q) ||
+      f.route.toLowerCase().includes(q) ||
+      f.airline.toLowerCase().includes(q) ||
+      f.origin_airport.toLowerCase().includes(q) ||
+      (f.delay_reason || '').toLowerCase().includes(q)
+    );
+  }, [allData, airlineF, reasonF, search]);
+
+  const totalPages = Math.max(1, Math.ceil(tableFlights.length / PAGE_SIZE));
+  const safePage   = Math.min(page, totalPages);
+  const pagedFlights = tableFlights.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  return (
+    <div>
+      {/* Filters */}
+      <div className="filters" style={{ marginBottom: 16 }}>
+        <span className="filter-label">Airline</span>
+        <select className="filter-input" value={airlineF} onChange={e => { setAirlineF(e.target.value); setPage(1); }}>
+          {airlineOpts.map(a => <option key={a}>{a}</option>)}
+        </select>
+        <span className="filter-label">Reason</span>
+        <select className="filter-input" value={reasonF} onChange={e => { setReasonF(e.target.value); setPage(1); }}>
+          {reasonOpts.map(r => <option key={r}>{r}</option>)}
+        </select>
+        <button className="page-btn" style={{ marginLeft: 4 }} onClick={() => { setAirlineF('All'); setReasonF('All'); setPage(1); }}>Reset</button>
+        <span className="gf-count" style={{ marginLeft: 'auto' }}>{data.length} / {allData.length} flights</span>
+      </div>
+
+      {/* KPI cards */}
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(5,1fr)', marginBottom: 20 }}>
+        <div className="stat-card yellow">
+          <div className="label">Total Delayed</div>
+          <div className="value">{fmt(stats.delayed.length)}</div>
+          <div className="sub">{pct(stats.delayed.length, data.length)}% of filtered flights</div>
+        </div>
+        <div className="stat-card yellow">
+          <div className="label">Average Delay</div>
+          <div className="value">{stats.avgDelay}<span style={{ fontSize: 15 }}>m</span></div>
+          <div className="sub">Delayed flights only</div>
+        </div>
+        <div className="stat-card red">
+          <div className="label">Maximum Delay</div>
+          <div className="value">{fmt(stats.maxDelay)}<span style={{ fontSize: 15 }}>m</span></div>
+          <div className="sub">{(stats.maxDelay / 60).toFixed(1)}h worst case</div>
+        </div>
+        <div className="stat-card red">
+          <div className="label">Delay Rate</div>
+          <div className="value">{stats.delayRate}%</div>
+          <div className="sub">Of all filtered flights</div>
+        </div>
+        <div className="stat-card red">
+          <div className="label">Cancellation Rate</div>
+          <div className="value">{stats.cancelRate}%</div>
+          <div className="sub">{fmt(stats.cancelled.length)} cancelled flights</div>
+        </div>
+      </div>
+
+      {/* Row 1: Delay Trend + Delay Reasons donut-style */}
+      <div className="chart-grid-top" style={{ marginBottom: 16 }}>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Delay Trend Over Time</div>
+            <div className="chart-subtitle">Daily count of delayed departures</div></div>
+          </div>
+          <LineChart points={stats.trendPoints} color="#f59e0b" />
+        </div>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Delay Reasons</div>
+            <div className="chart-subtitle">By canonical category</div></div>
+          </div>
+          {stats.reasonRows.length === 0
+            ? <div className="empty-state" style={{ padding: '30px 0' }}><div className="es-icon">✅</div><div className="es-title">No delays</div></div>
+            : <BigDonut segments={stats.reasonRows.map(r => ({ label: r.label, value: r.value, color: r.color }))} />
+          }
+        </div>
+      </div>
+
+      {/* Row 2: Delays by Airline + Avg Delay by Airline */}
+      <div className="chart-grid-mid" style={{ marginBottom: 16 }}>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Delays by Airline</div>
+            <div className="chart-subtitle">Total delayed flights per carrier</div></div>
+          </div>
+          <HBarChart
+            rows={stats.airlineRows.map(r => ({ label: r.label, value: r.delayed, color: '#f59e0b' }))}
+            color="#f59e0b" />
+        </div>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Average Delay by Airline</div>
+            <div className="chart-subtitle">Minutes — delayed flights only</div></div>
+          </div>
+          <HBarChart
+            rows={stats.airlineRows.filter(r => r.delayed > 0)
+              .map(r => ({ label: r.label, value: parseFloat(r.avgDelay), color: '#ef4444' }))}
+            color="#ef4444" unit=" min" />
+        </div>
+      </div>
+
+      {/* Row 3: Delays by Airport + Delays by Route */}
+      <div className="chart-grid-mid" style={{ marginBottom: 16 }}>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Delays by Airport</div>
+            <div className="chart-subtitle">Delayed departures per origin airport</div></div>
+          </div>
+          <HBarChart rows={stats.airportRows} color="#f59e0b" />
+        </div>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Delays by Route</div>
+            <div className="chart-subtitle">Top 10 routes by delayed flights</div></div>
+          </div>
+          <HBarChart rows={stats.routeRows} color="#8b5cf6" />
+        </div>
+      </div>
+
+      {/* Row 4: Duration buckets + Delay Reason breakdown table */}
+      <div className="chart-grid-mid" style={{ marginBottom: 16 }}>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Delay Duration Buckets</div>
+            <div className="chart-subtitle">Distribution of delay severity</div></div>
+          </div>
+          <HBarChart rows={stats.bucketRows} color="#f59e0b" />
+        </div>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div><div className="chart-title">Delay Reason Detail</div>
+            <div className="chart-subtitle">Count + average delay per category</div></div>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Flights</th>
+                  <th>% of Delays</th>
+                  <th>Avg Min</th>
+                  <th>Share</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.reasonRows.length === 0
+                  ? <tr><td colSpan={5} style={{ textAlign: 'center', color: '#94a3b8', padding: 24 }}>No delay data</td></tr>
+                  : stats.reasonRows.map((r, i) => (
+                    <tr key={i}>
+                      <td>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 2, background: r.color, display: 'inline-block' }} />
+                          <strong>{r.label}</strong>
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 700, color: r.color }}>{r.value}</td>
+                      <td>{pct(r.value, stats.delayed.length)}%</td>
+                      <td><span style={{ color: '#d97706', fontWeight: 600 }}>{r.avgMin}m</span></td>
+                      <td style={{ minWidth: 80 }}>
+                        <div style={{ height: 5, background: '#f1f5f9', borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: pct(r.value, stats.delayed.length)+'%', background: r.color, borderRadius: 3 }} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Airline summary table */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 16 }}>
+        <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f1f5f9' }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>Delay &amp; Cancellation by Airline</span>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Airline</th>
+                <th>Total</th>
+                <th>Delayed</th>
+                <th>Delay Rate</th>
+                <th>Avg Delay</th>
+                <th>Total Delay (min)</th>
+                <th>Cancelled</th>
+                <th>Cancel Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.airlineRows.map((r, i) => (
+                <tr key={i}>
+                  <td><strong>{r.label}</strong></td>
+                  <td>{r.total}</td>
+                  <td><span style={{ color: '#d97706', fontWeight: 700 }}>{r.delayed}</span></td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ flex: 1, height: 5, background: '#f1f5f9', borderRadius: 3, overflow: 'hidden', minWidth: 36 }}>
+                        <div style={{ height: '100%', width: r.delayRate+'%', background: '#f59e0b', borderRadius: 3 }} />
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#d97706', width: 36 }}>{r.delayRate}%</span>
+                    </div>
+                  </td>
+                  <td><span style={{ fontWeight: 700, color: '#d97706' }}>{r.avgDelay}m</span></td>
+                  <td style={{ color: '#718096', fontSize: 12 }}>{fmt(r.totalDelay)}</td>
+                  <td><span style={{ color: '#ef4444', fontWeight: 700 }}>{r.cancelled}</span></td>
+                  <td><span style={{ color: '#ef4444', fontSize: 12 }}>{r.cancelRate}%</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Searchable delayed flights table */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 8 }}>
+        <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>Delayed Flights</span>
+          <span className="badge badge-yellow" style={{ fontSize: 11 }}>{tableFlights.length} flights</span>
+          <input className="filter-input" placeholder="🔍 Flight #, route, airline, reason…"
+            value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+            style={{ marginLeft: 'auto', minWidth: 240, padding: '4px 10px', fontSize: 12 }} />
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Flight #</th>
+                <th>Airline</th>
+                <th>Route</th>
+                <th>Date</th>
+                <th>Sched Dep</th>
+                <th>Actual Dep</th>
+                <th>Delay</th>
+                <th>Category</th>
+                <th>Raw Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedFlights.length === 0 ? (
+                <tr><td colSpan={9}>
+                  <div className="empty-state"><div className="es-icon">⏱️</div><div className="es-title">No delayed flights match</div><div className="es-sub">Try adjusting your filters</div></div>
+                </td></tr>
+              ) : pagedFlights.map((f, i) => {
+                const cat = canonReason(f.delay_reason || '');
+                return (
+                  <tr key={i}>
+                    <td><strong style={{ color: '#f59e0b' }}>{f.flight_number}</strong></td>
+                    <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{f.airline}</td>
+                    <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{f.route}</td>
+                    <td style={{ fontSize: 12 }}>{f.departure_date}</td>
+                    <td style={{ fontSize: 12 }}>{f.scheduled_departure}</td>
+                    <td style={{ fontSize: 12 }}>{f.actual_departure || '—'}</td>
+                    <td><span style={{ fontWeight: 700, color: '#d97706' }}>{f.delay_minutes}m</span></td>
+                    <td>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: REASON_COLORS[cat] || '#94a3b8' }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: REASON_COLORS[cat] || '#94a3b8', display: 'inline-block' }} />
+                        {cat}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: 11, color: '#94a3b8' }}>{f.delay_reason}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <Pagination page={safePage} totalPages={totalPages} setPage={setPage} />
+    </div>
+  );
+}
+
+// ─── APP ROOT ─────────────────────────────────────────────────────────────────
+function App() {
+  const [page, setPage] = useState("overview");
+
+  const data         = window.FLIGHTS_DATA  || [];
+  const airportsMeta = window.AIRPORTS_META || [];
+
+  const pageEl = useMemo(() => {
+    switch (page) {
+      case "overview":   return <OverviewPage   data={data} />;
+      case "flights":    return <FlightsPage    data={data} />;
+      case "routes":     return <RoutesPage     data={data} />;
+      case "airports":   return <AirportsPage   data={data} airportsMeta={airportsMeta} />;
+      case "passengers": return <PassengersPage data={data} />;
+      case "delays":     return <DelaysPage     data={data} />;
+      default:           return <OverviewPage   data={data} />;
+    }
+  }, [page, data, airportsMeta]);
+
+  return (
+    <div className="layout">
+      <Sidebar active={page} onNav={setPage} />
+      <div className="main">
+        <TopBar page={page} total={data.length} />
+        <div className="page-content">
+          {pageEl}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
